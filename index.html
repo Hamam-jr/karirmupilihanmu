@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Karirmu, Pilihanmu — Text Game</title>
+  <meta name="description" content="Game naratif berbasis pilihan untuk eksplorasi karir." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>Karirmu, Pilihanmu</h1>
+    <p class="subtitle">Game naratif berbasis pilihan tentang perjalanan karir (mobile friendly).</p>
+    <div id="controls" class="controls">
+      <button id="btn-new">Mulai Baru</button>
+      <button id="btn-continue" disabled>Lanjutkan</button>
+      <button id="btn-restart" disabled>Restart Sesi</button>
+      <button id="btn-export">Unduh Log</button>
+      <button id="btn-help">Bantuan</button>
+    </div>
+    <div id="scoreboard" class="scoreboard" aria-live="polite">
+      <div><span>Minat</span><strong id="sc-minat">0</strong></div>
+      <div><span>Keseimbangan</span><strong id="sc-keseimbangan">0</strong></div>
+      <div><span>Penghasilan</span><strong id="sc-penghasilan">0</strong></div>
+      <div><span>Nilai Diri</span><strong id="sc-nilai">0</strong></div>
+      <div><span>Kepuasan</span><strong id="sc-kepuasan">0</strong></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section id="scene" class="scene" aria-live="polite">
+      <div id="scene-id" class="scene-id" hidden></div>
+      <div id="scene-text" class="scene-text"></div>
+      <div id="random-event" class="random-event" hidden></div>
+      <ul id="choices" class="choices" role="list"></ul>
+    </section>
+    <section id="end-screen" class="end-screen" hidden>
+      <h2>Refleksi Akhir</h2>
+      <ul id="reflections"></ul>
+      <div class="end-actions">
+        <button id="btn-play-again">Main Lagi</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bantuan -->
+  <dialog id="dlg-help">
+    <h3>Cara Bermain</h3>
+    <ol>
+      <li>Pilih jalur dan keputusan pada setiap tahap.</li>
+      <li>Perhatikan 5 skor: Minat, Keseimbangan, Penghasilan, Nilai Diri, Kepuasan.</li>
+      <li>Peristiwa acak kadang muncul dan memengaruhi skor.</li>
+      <li>Di <b>akhir permainan</b> akan muncul ringkasan skor akhir; kamu bisa <i>Main Lagi</i> atau <i>Selesai</i> untuk melihat refleksi.</li>
+    </ol>
+    <p>Progres sesi tersimpan sementara di perangkat ini (localStorage). Tidak ada data yang dikirim ke server.</p>
+    <button id="btn-close-help">Tutup</button>
+  </dialog>
+
+  <!-- Ringkasan Akhir Saja -->
+  <dialog id="dlg-summary">
+    <h3 id="sum-title">Ringkasan Akhir</h3>
+    <p id="sum-subtitle">Skor akhir perjalananmu:</p>
+    <div class="sum-table-wrap">
+      <table class="sum-table" id="sum-table" aria-label="Ringkasan skor akhir">
+        <thead>
+          <tr><th>Dimensi</th><th>Nilai</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="sum-note" class="sum-note">Pilih <b>Main Lagi</b> untuk mengulang dari awal, atau <b>Selesai</b> untuk melihat refleksi.</div>
+    <div class="sum-actions">
+      <button id="btn-sum-replay">Main Lagi</button>
+      <button id="btn-sum-finish">Selesai</button>
+    </div>
+  </dialog>
+
+  <footer class="site-footer">
+    <small>© 2025 — MVP edukasi. Dibuat untuk tugas akhir (R&D). Referensi desain: BitLife dan dokumen desain penulis.</small>
+  </footer>
+
+  <script src="game_data.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
