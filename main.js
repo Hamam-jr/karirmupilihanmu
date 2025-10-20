@@ -190,7 +190,7 @@ function openFinalSummary(scores) {
   // determine path if not set
   if (!state.path) state.path = inferPathFromLog();
   const fit = computeFit(scores, state.path || 'guru');
-  els.fitTitle.textContent = `${fit.verdict} — Skor Kecocokan ${fit.fit}/100 untuk jalur ${CAREER_PROFILES[state.path||'guru'].label}`;
+  els.fitTitle.textContent = `{fit.verdict} — Skor Kecocokan {fit.fit}/10 untuk jalur ${CAREER_PROFILES[state.path||'guru'].label}`;
   els.fitReasons.innerHTML = '';
   fit.reasons.slice(0,4).forEach(r=>{ const li=document.createElement('li'); li.textContent=r; els.fitReasons.appendChild(li); });
 
