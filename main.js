@@ -173,7 +173,7 @@ function computeFit(scores, path) {
   if (reasons.length) why.push(...reasons);
   else why.push(...negR);
 
-  return { fit: Math.round(fit), verdict: f"{label} {verdict}", reasons: why, profile };
+  return { fit: Math.round(fit), verdict: '${label} ${verdict}', reasons: why, profile };
 }
 function caps(k){ return k[0].toUpperCase() + k.slice(1); }
 
