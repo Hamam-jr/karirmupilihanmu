@@ -6,7 +6,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;line-height:1.55}
-.site-header{padding:24px 16px;border-bottom:1px solid #222;background:linear-gradient(180deg,#121420 0%,#0f1118 100%)}
+.site-header{padding:24px 16px;border-bottom:1px solid #a29d9d;background:linear-gradient(180deg,#8e9099 0%,#828488 100%)}
 h1{margin:0 0 8px 0;font-size:clamp(22px,4vw,36px);letter-spacing:.3px}
 .subtitle{margin:0;color:var(--muted);font-size:clamp(12px,1.8vw,16px)}
 .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -42,7 +42,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 .sum-table{width:100%;border-collapse:collapse}
 .sum-table th,.sum-table td{border:1px solid #274093;padding:8px;text-align:center}
 .sum-table th{text-align:center;background:#3e5aca;position:sticky;top:0}
-.fit-section{margin:8px 0 12px 0;padding:10px;border:1px dashed #364fa1;border-radius:10px;background:#141722}
+.fit-section{margin:8px 0 12px 0;padding:10px;border:1px dashed #364fa1;border-radius:10px;background:#737a94}
 .fit-title{font-weight:700;margin:4px 0 8px 0}
 .fit-reasons{margin:0 0 0 18px}
 .fit-note{color:var(--muted)}
