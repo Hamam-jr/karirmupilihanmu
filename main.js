@@ -122,7 +122,7 @@ function applySceneTheme(scn) {
 }
 
 function norm(v) { const x = Math.max(0, Math.min(v, MAX_SCORE_PER_DIM)); return (x / MAX_SCORE_PER_DIM) * 100; }
-function balanceIndex(norms) { // 0..100 (100=merata)
+function balanceIndex(norms) { // 0..10 (10=merata)
   const arr = Object.values(norms); const min = Math.min(...arr), max = Math.max(...arr);
   if (max === 0) return 0; return (min / max) * 100;
 }
