@@ -47,6 +47,6 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 .fit-reasons{margin:0 0 0 18px}
 .fit-note{color:var(--muted)}
 .sum-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-#btn-sum-replay,#btn-sum-finish{background:#1e2230;color:var(--ink);border:1px solid #2c3142;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:44px}
+#btn-sum-replay,#btn-sum-finish{background:#5a72c7;color:var(--ink);border:1px solid #2c3142;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;min-height:44px}
 #btn-sum-replay:hover,#btn-sum-finish:hover{border-color:var(--accent)}
 @media (max-width: 720px){ .scene{grid-template-columns:1fr;gap:12px} }
