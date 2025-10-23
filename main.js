@@ -1,297 +1,795 @@
-// v5: Final summary includes rule-based career-fit recommendation (+reasons).
-// Keep audio/TTS controls from v4 in minimal form to focus on fit logic.
+// Enhanced IT Career Exploration Game - Main Application
+// Version 6.0 - Modern UI/UX with 2025 Design Trends
 
-const SCORES = ["minat","keseimbangan","penghasilan","nilai","kepuasan"];
-const MAX_SCORE_PER_DIM = 120; // asumsi batas atas realistis untuk normalisasi (sesuaikan jika Anda mengubah efek)
+class CareerExplorationGame {
+  constructor() {
+    // Game state - using in-memory storage (no localStorage in sandbox)
+    this.gameState = {
+      currentScene: 'start',
+      currentPath: null,
+      sceneNumber: 0,
+      scores: { ...gameData.initialScores },
+      choices: [],
+      randomEvents: [],
+      gameStarted: false,
+      onboardingCompleted: false
+    };
 
-// Profil jalur: bobot (jumlah=1) dan ambang minimal (threshold) per dimensi
-const CAREER_PROFILES = {
-  guru: {
-    label: "Guru/ASN Pendidikan",
-    weights: { minat:0.25, nilai:0.30, kepuasan:0.20, keseimbangan:0.15, penghasilan:0.10 },
-    min: { minat:40, nilai:40, kepuasan:35 },
-    notes: "Fokus pada panggilan mengajar (minat & nilai) dan kepuasan; keseimbangan penting, finansial tidak dominan."
-  },
-  wira: {
-    label: "Wirausaha Teknologi",
-    weights: { penghasilan:0.35, minat:0.25, kepuasan:0.15, nilai:0.15, keseimbangan:0.10 },
-    min: { penghasilan:40, minat:35 },
-    floor: { keseimbangan:20 }, // terima keseimbangan rendah, tapi jangan < 20
-    notes: "Viabilitas finansial & dorongan internal utama; toleransi terhadap keseimbangan yang fluktuatif."
-  },
-  s2: {
-    label: "Akademia (S2/riset)",
-    weights: { minat:0.30, nilai:0.30, kepuasan:0.20, penghasilan:0.10, keseimbangan:0.10 },
-    min: { minat:40, nilai:40 },
-    notes: "Riset butuh minat & nilai yang kuat; kepuasan akademik sebagai penguat."
-  },
-  ind: {
-    label: "Industri Non-Pendidikan",
-    weights: { penghasilan:0.30, keseimbangan:0.25, minat:0.20, nilai:0.15, kepuasan:0.10 },
-    min: { penghasilan:40, keseimbangan:35 },
-    notes: "Stabilitas finansial & keseimbangan kerja-hidup penting; minat & nilai tetap relevan."
+    // UI settings
+    this.settings = {
+      animationsEnabled: true,
+      musicEnabled: false,
+      onboardingDone: false
+    };
+
+    // Current state trackers
+    this.currentSlide = 0;
+    this.isTransitioning = false;
+    this.randomEventTimeout = null;
+
+    // Initialize the game
+    this.init();
   }
-};
 
-// --- Audio/TTS minimal (placeholders ON/OFF) ---
-let MUSIC_ON=false, SFX_ON=true, TTS_ON=false;
-const els = {
-  btnNew: document.getElementById('btn-new'),
-  btnContinue: document.getElementById('btn-continue'),
-  btnRestart: document.getElementById('btn-restart'),
-  btnExport: document.getElementById('btn-export'),
-  btnHelp: document.getElementById('btn-help'),
-  btnMusic: document.getElementById('btn-music'),
-  btnSfx: document.getElementById('btn-sfx'),
-  btnTts: document.getElementById('btn-tts'),
-  scoreboard: {
-    minat: document.getElementById('sc-minat'),
-    keseimbangan: document.getElementById('sc-keseimbangan'),
-    penghasilan: document.getElementById('sc-penghasilan'),
-    nilai: document.getElementById('sc-nilai'),
-    kepuasan: document.getElementById('sc-kepuasan'),
-  },
-  scene: document.getElementById('scene'),
-  sceneId: document.getElementById('scene-id'),
-  sceneText: document.getElementById('scene-text'),
-  rnd: document.getElementById('random-event'),
-  choices: document.getElementById('choices'),
-  portrait: document.getElementById('portrait-img'),
-  portraitCap: document.getElementById('portrait-cap'),
-  end: document.getElementById('end-screen'),
-  reflections: document.getElementById('reflections'),
-  btnPlayAgain: document.getElementById('btn-play-again'),
-  dlgHelp: document.getElementById('dlg-help'),
-  btnCloseHelp: document.getElementById('btn-close-help'),
-  dlgSummary: document.getElementById('dlg-summary'),
-  sumTitle: document.getElementById('sum-title'),
-  sumSubtitle: document.getElementById('sum-subtitle'),
-  sumTable: document.getElementById('sum-table'),
-  sumNote: document.getElementById('fit-note'),
-  btnSumReplay: document.getElementById('btn-sum-replay'),
-  btnSumFinish: document.getElementById('btn-sum-finish'),
-  fitTitle: document.getElementById('fit-title'),
-  fitReasons: document.getElementById('fit-reasons'),
-};
-
-let state = null, scenes = null, startScene = "start";
-function newState() {
-  return {
-    sessionId: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-    sceneId: startScene,
-    scores: {minat:0, keseimbangan:0, penghasilan:0, nilai:0, kepuasan:0},
-    path: null, // 'guru' | 'wira' | 's2' | 'ind'
-    log: [],
-    ended: false,
-    startedAt: new Date().toISOString()
-  };
-}
-function persist() {
-  localStorage.setItem('kp_state', JSON.stringify(state));
-  const logs = JSON.parse(localStorage.getItem('kp_logs') || '[]');
-  const idx = logs.findIndex(l => l.sessionId === state.sessionId);
-  if (idx>=0) logs[idx] = state; else logs.push(state);
-  localStorage.setItem('kp_logs', JSON.stringify(logs));
-}
-function loadPersisted() {
-  const raw = localStorage.getItem('kp_state'); if (!raw) return null;
-  try { return JSON.parse(raw); } catch { return null; }
-}
-function updateScoreboard() {
-  for (const k of SCORES) { els.scoreboard[k].textContent = state.scores[k] || 0; }
-}
-function applyEffects(effects) {
-  if (!effects) return; for (const [k,v] of Object.entries(effects)) {
-    if (SCORES.includes(k)) state.scores[k] = (state.scores[k] || 0) + Number(v || 0);
-  }
-}
-function maybeFireRandom(scene) {
-  const evts = scene.random_events || []; const fired = [];
-  for (const ev of evts) {
-    let p = 0; if (typeof ev.p === 'number') p = ev.p; if (typeof ev.pct === 'number') p = ev.pct/100; if (p>1) p/=100;
-    if (Math.random() < p) { applyEffects(ev.effects); fired.push(ev.text); }
-  } return fired;
-}
-function speak(text){ if(!TTS_ON) return; try{ const u=new SpeechSynthesisUtterance(text); const v=window.speechSynthesis.getVoices().find(v=>/id|indonesian/i.test(v.lang||v.name)); if(v) u.voice=v; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);}catch(e){}}
-
-function applySceneTheme(scn) {
-  const charMap = window.GAME_DATA.characters || {};
-  const cid = scn.char || "guru"; const char = charMap[cid] || { label: "Karakter", portrait: "assets/characters/guru.svg" };
-  els.portrait.src = char.portrait || "assets/characters/guru.svg";
-  els.portrait.alt = char.label || "Karakter"; els.portraitCap.textContent = char.label || "Karakter";
-}
-
-function norm(v) { const x = Math.max(0, Math.min(v, MAX_SCORE_PER_DIM)); return (x / MAX_SCORE_PER_DIM) * 100; }
-function balanceIndex(norms) { // 0..10 (10=merata)
-  const arr = Object.values(norms); const min = Math.min(...arr), max = Math.max(...arr);
-  if (max === 0) return 0; return (min / max) * 100;
-}
-function computeFit(scores, path) {
-  const profile = CAREER_PROFILES[path] || CAREER_PROFILES.guru;
-  const n = {}; for (const k of SCORES) n[k] = norm(scores[k]||0);
-  // weighted score
-  let ws = 0; for (const k of SCORES) { ws += (profile.weights[k]||0)*n[k]; }
-  // thresholds
-  let bonus = 0, threshOk = true, reasons = [];
-  if (profile.min) {
-    for (const [k,t] of Object.entries(profile.min)) {
-      if (n[k] < t) { threshOk = false; reasons.push(`Nilai ${caps(k)} di bawah ambang (${n[k].toFixed(0)} < ${t}).`); }
+  init() {
+    console.log('🎮 Initializing Career Exploration Game v6.0');
+    
+    // Check if onboarding was completed before
+    // Since we can't use localStorage, show onboarding every time
+    this.setupEventListeners();
+    this.setupKeyboardNavigation();
+    this.initializeTheme();
+    
+    // Show onboarding for first-time users
+    if (!this.settings.onboardingDone) {
+      this.showOnboarding();
+    } else {
+      this.hideOnboarding();
     }
-  }
-  if (profile.floor) {
-    for (const [k,t] of Object.entries(profile.floor)) {
-      if (n[k] < t) { threshOk = false; reasons.push(`Nilai ${caps(k)} terlalu rendah untuk tahap awal (${n[k].toFixed(0)} < ${t}).`); }
-    }
-  }
-  if (threshOk) bonus += 8; // semua ambang terpenuhi
-  // balance
-  const bi = balanceIndex(n);
-  // penalty untuk ketimpangan ekstrem
-  const lowDims = Object.entries(n).filter(([k,v]) => v < 25).map(([k])=>k);
-  const highDims = Object.entries(n).filter(([k,v]) => v > 70).map(([k])=>k);
-  let penalty = 0;
-  if (lowDims.length>=2 && highDims.length>=2) penalty += 8;
-  // final fit 0..100
-  let fit = 0.6*ws + 0.3*bi + 0.1*(bonus - penalty);
-  fit = Math.max(0, Math.min(100, fit));
 
-  // derive verdict
-  let verdict = ""; let label = "";
-  if (fit >= 80) { verdict = "Sangat cocok"; label="✅"; }
-  else if (fit >= 65) { verdict = "Cocok"; label="👍"; }
-  else if (fit >= 50) { verdict = "Perlu eksplorasi lanjutan"; label="⚖️"; }
-  else { verdict = "Kurang cocok saat ini"; label="⚠️"; }
-
-  // build reasons: 2 kuat + 1-2 lemah
-  const sorted = Object.entries(n).sort((a,b)=>b[1]-a[1]);
-  const top2 = sorted.slice(0,2);
-  const bottom2 = sorted.slice(-2);
-  const posR = top2.map(([k,v])=>`Kekuatan: ${caps(k)} ${v.toFixed(0)} mendukung profil ${profile.label.toLowerCase()}.`);
-  const negR = bottom2.map(([k,v])=>`Perlu perhatian: ${caps(k)} ${v.toFixed(0)} masih relatif rendah.`);
-  const why = [];
-  why.push(...posR);
-  if (reasons.length) why.push(...reasons);
-  else why.push(...negR);
-
-  return { fit: Math.round(fit), verdict: '${label} ${verdict}', reasons: why, profile };
-}
-function caps(k){ return k[0].toUpperCase() + k.slice(1); }
-
-function openFinalSummary(scores) {
-  // fill scores table
-  const tbody = els.sumTable.querySelector('tbody'); tbody.innerHTML = '';
-  const dims = ["minat","keseimbangan","penghasilan","nilai","kepuasan"];
-  for (const k of dims) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${caps(k)}</td><td>${Number(scores[k]||0)}</td>`;
-    tbody.appendChild(tr);
+    // Initialize first scene
+    this.renderScene();
   }
 
-  // determine path if not set
-  if (!state.path) state.path = inferPathFromLog();
-  const fit = computeFit(scores, state.path || 'guru');
-  els.fitTitle.textContent = `{fit.verdict} — Skor Kecocokan {fit.fit}/100 untuk jalur ${CAREER_PROFILES[state.path||'guru'].label}`;
-  els.fitReasons.innerHTML = '';
-  fit.reasons.slice(0,4).forEach(r=>{ const li=document.createElement('li'); li.textContent=r; els.fitReasons.appendChild(li); });
+  setupEventListeners() {
+    // Header controls
+    document.getElementById('musicBtn').addEventListener('click', () => this.toggleMusic());
+    document.getElementById('restartBtn').addEventListener('click', () => this.restartGame());
+    document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
+    document.getElementById('saveBtn').addEventListener('click', () => this.saveGame());
 
-  els.dlgSummary.showModal();
-}
+    // Onboarding
+    document.getElementById('skipOnboarding').addEventListener('click', () => this.skipOnboarding());
+    document.getElementById('nextSlide').addEventListener('click', () => this.nextSlide());
+    document.getElementById('prevSlide').addEventListener('click', () => this.prevSlide());
 
-function inferPathFromLog(){
-  // cari scene pertama selain 'start' dari log, ambil prefix id: 'guru_', 'wira_', 's2_', 'ind_'
-  for (const step of state.log) {
-    const m = /^([a-z]+)_/i.exec(step.scene||"");
-    if (m) {
-      const key = m[1];
-      if (["guru","wira","s2","ind"].includes(key)) return key;
-    }
-  }
-  // fallback: pakai sceneId sekarang
-  const m = /^([a-z]+)_/i.exec(state.sceneId||""); if (m) return m[1];
-  return "guru";
-}
+    // Dialogs
+    document.getElementById('closeHelp').addEventListener('click', () => this.hideHelp());
+    document.getElementById('closeSummary').addEventListener('click', () => this.hideSummary());
 
-function renderScene() {
-  const sc = scenes[state.sceneId];
-  if (!sc) { console.error("Scene not found:", state.sceneId); return; }
-  els.scene.hidden = false; els.end.hidden = true;
-  els.sceneId.textContent = state.sceneId;
-  els.sceneText.textContent = sc.text;
-  if (TTS_ON) speak(sc.text);
-  els.choices.innerHTML = ''; els.rnd.hidden = true; els.rnd.textContent = '';
+    // End screen buttons
+    document.getElementById('playAgainBtn').addEventListener('click', () => this.restartGame());
+    document.getElementById('viewSummaryBtn').addEventListener('click', () => this.showSummary());
 
-  applySceneTheme(sc);
-
-  sc.choices.forEach((ch) => {
-    const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    btn.innerHTML = `<div>${ch.label}</div>` + (ch.hint ? `<small>${ch.hint}</small>` : '');
-    btn.addEventListener('click', () => {
-      applyEffects(ch.effects);
-      const fired = maybeFireRandom(sc);
-      // set path when leaving 'start'
-      if (!state.path && state.sceneId === 'start' && ch.to) {
-        const m = /^([a-z]+)_/i.exec(ch.to||""); if (m) state.path = m[1];
-      }
-      state.log.push({ t: new Date().toISOString(), scene: state.sceneId, choice: ch.label, effects: ch.effects || {}, randoms: fired || [] });
-      updateScoreboard(); persist();
-      if (fired && fired.length) { els.rnd.textContent = `[Peristiwa] ${fired.join(" | ")}`; els.rnd.hidden = false; }
-      if (ch.to === "END") { openFinalSummary(state.scores); } else { state.sceneId = ch.to; renderScene(); }
+    // Summary tabs
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
     });
-    li.appendChild(btn); els.choices.appendChild(li);
-  });
 
-  updateScoreboard(); els.btnRestart.disabled = false;
+    // Random event dismiss
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('random-event-dismiss')) {
+        this.hideRandomEvent();
+      }
+    });
+
+    // Dialog overlay clicks
+    document.querySelectorAll('.dialog-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.style.display = 'none';
+        }
+      });
+    });
+
+    // Onboarding overlay clicks
+    document.getElementById('onboardingOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.skipOnboarding();
+      }
+    });
+  }
+
+  setupKeyboardNavigation() {
+    document.addEventListener('keydown', (e) => {
+      // Don't handle keys if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      const choices = document.querySelectorAll('.choice-card:not([style*="display: none"])');
+      
+      switch(e.key) {
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+          const choiceIndex = parseInt(e.key) - 1;
+          if (choices[choiceIndex]) {
+            this.selectChoice(choiceIndex);
+          }
+          break;
+        case 'Enter':
+          if (choices.length > 0) {
+            this.selectChoice(0); // Select first choice
+          }
+          break;
+        case 'r':
+        case 'R':
+          if (e.ctrlKey || e.metaKey) return; // Don't interfere with refresh
+          this.restartGame();
+          break;
+        case 'h':
+        case 'H':
+          this.showHelp();
+          break;
+        case 'Escape':
+          // Close any open dialogs
+          document.querySelectorAll('.dialog-overlay').forEach(overlay => {
+            if (overlay.style.display !== 'none') {
+              overlay.style.display = 'none';
+            }
+          });
+          break;
+      }
+    });
+  }
+
+  initializeTheme() {
+    // Apply current career path theme if any
+    if (this.gameState.currentPath) {
+      this.applyCareerTheme(this.gameState.currentPath);
+    }
+  }
+
+  applyCareerTheme(pathId) {
+    const path = gameData.careerPaths[pathId];
+    if (!path) return;
+
+    const root = document.documentElement;
+    root.style.setProperty('--current-career-primary', path.colorPrimary);
+    root.style.setProperty('--current-career-accent', path.colorAccent);
+    
+    // Update header gradient
+    const header = document.querySelector('.header');
+    header.style.background = `linear-gradient(135deg, ${path.colorPrimary}15 0%, ${path.colorAccent}10 100%)`;
+    
+    // Update progress steps color
+    document.documentElement.style.setProperty('--progress-color', path.colorPrimary);
+    
+    // Update character name
+    const characterNameEl = document.getElementById('characterName');
+    if (characterNameEl) {
+      characterNameEl.textContent = path.characterName;
+    }
+  }
+
+  // ONBOARDING SYSTEM
+  showOnboarding() {
+    document.getElementById('onboardingOverlay').style.display = 'flex';
+    this.currentSlide = 0;
+    this.updateOnboardingSlide();
+  }
+
+  hideOnboarding() {
+    document.getElementById('onboardingOverlay').style.display = 'none';
+    this.settings.onboardingDone = true;
+  }
+
+  skipOnboarding() {
+    this.hideOnboarding();
+  }
+
+  nextSlide() {
+    const totalSlides = document.querySelectorAll('.onboarding-slide').length;
+    if (this.currentSlide < totalSlides - 1) {
+      this.currentSlide++;
+      this.updateOnboardingSlide();
+    } else {
+      this.hideOnboarding();
+    }
+  }
+
+  prevSlide() {
+    if (this.currentSlide > 0) {
+      this.currentSlide--;
+      this.updateOnboardingSlide();
+    }
+  }
+
+  updateOnboardingSlide() {
+    const slides = document.querySelectorAll('.onboarding-slide');
+    const indicators = document.querySelectorAll('.indicator');
+    const nextBtn = document.getElementById('nextSlide');
+    const prevBtn = document.getElementById('prevSlide');
+
+    // Hide all slides
+    slides.forEach(slide => slide.style.display = 'none');
+    indicators.forEach(indicator => indicator.classList.remove('active'));
+
+    // Show current slide
+    slides[this.currentSlide].style.display = 'block';
+    indicators[this.currentSlide].classList.add('active');
+
+    // Update navigation buttons
+    prevBtn.disabled = this.currentSlide === 0;
+    nextBtn.textContent = this.currentSlide === slides.length - 1 ? 'Mulai' : 'Selanjutnya';
+  }
+
+  // SCENE MANAGEMENT
+  renderScene() {
+    const sceneId = this.gameState.currentScene;
+    const scene = gameData.scenes[sceneId];
+    
+    if (!scene) {
+      console.error('Scene not found:', sceneId);
+      return;
+    }
+
+    // Handle end scene
+    if (sceneId === 'END') {
+      this.showEndScreen();
+      return;
+    }
+
+    // Update progress for path scenes
+    if (sceneId !== 'start' && sceneId !== 'END') {
+      this.updateProgress();
+    }
+
+    // Show scene elements
+    document.getElementById('sceneCard').style.display = 'block';
+    document.getElementById('endScreen').style.display = 'none';
+
+    // Update scene content
+    document.getElementById('sceneTitle').textContent = scene.title;
+    document.getElementById('sceneText').innerHTML = `<p>${scene.text}</p>`;
+
+    // Show/hide character portrait based on scene
+    const portraitEl = document.getElementById('characterPortrait');
+    if (sceneId === 'start') {
+      portraitEl.style.display = 'none';
+      document.getElementById('scoreboard').style.display = 'none';
+      document.getElementById('progressContainer').style.display = 'none';
+    } else {
+      portraitEl.style.display = 'flex';
+      document.getElementById('scoreboard').style.display = 'flex';
+      document.getElementById('progressContainer').style.display = 'block';
+    }
+
+    // Render choices
+    this.renderChoices(scene.choices);
+
+    // Update scoreboard
+    this.updateScoreboard();
+
+    // Check for random events
+    this.checkRandomEvent();
+
+    // Add scene transition animation
+    this.animateSceneTransition();
+  }
+
+  renderChoices(choices) {
+    const container = document.getElementById('choicesContainer');
+    container.innerHTML = '';
+    container.setAttribute('data-count', choices.length);
+
+    choices.forEach((choice, index) => {
+      const choiceEl = this.createChoiceElement(choice, index);
+      container.appendChild(choiceEl);
+    });
+  }
+
+  createChoiceElement(choice, index) {
+    const div = document.createElement('div');
+    div.className = 'choice-card';
+    div.setAttribute('data-choice-index', index);
+    div.setAttribute('tabindex', '0');
+    
+    // Add career path specific class for start scene
+    if (this.gameState.currentScene === 'start') {
+      div.classList.add('career-path');
+      const pathId = choice.nextScene.split('_')[0];
+      div.setAttribute('data-path', pathId);
+    }
+
+    // Extract icon from choice text or use default
+    const iconMatch = choice.text.match(/^([\u{1F000}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}])/u);
+    const icon = iconMatch ? iconMatch[1] : '🎯';
+    const textWithoutIcon = choice.text.replace(/^([\u{1F000}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}])\s*/u, '');
+
+    div.innerHTML = `
+      <div class="choice-icon">${icon}</div>
+      <div class="choice-content">
+        <h3>${textWithoutIcon}</h3>
+        ${choice.subtext ? `<small>${choice.subtext}</small>` : ''}
+        ${this.getChoiceEffectsText(choice.effects)}
+      </div>
+    `;
+
+    // Add click handler
+    div.addEventListener('click', () => this.selectChoice(index));
+
+    // Add keyboard focus handler
+    div.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.selectChoice(index);
+      }
+    });
+
+    return div;
+  }
+
+  getChoiceEffectsText(effects) {
+    if (!effects || Object.keys(effects).length === 0) return '';
+    
+    const effectTexts = [];
+    Object.entries(effects).forEach(([dimension, value]) => {
+      if (value !== 0) {
+        const sign = value > 0 ? '+' : '';
+        const dimensionData = gameData.scoreDimensions[dimension];
+        if (dimensionData) {
+          effectTexts.push(`${dimensionData.icon} ${sign}${value}`);
+        }
+      }
+    });
+    
+    if (effectTexts.length > 0) {
+      return `<div class="choice-effects">Efek: ${effectTexts.join(', ')}</div>`;
+    }
+    return '';
+  }
+
+  selectChoice(choiceIndex) {
+    if (this.isTransitioning) return;
+
+    const scene = gameData.scenes[this.gameState.currentScene];
+    const choice = scene.choices[choiceIndex];
+    
+    if (!choice) return;
+
+    this.isTransitioning = true;
+
+    // Record choice
+    this.gameState.choices.push({
+      scene: this.gameState.currentScene,
+      choiceIndex: choiceIndex,
+      choiceText: choice.text,
+      effects: choice.effects
+    });
+
+    // Apply choice effects to scores
+    if (choice.effects) {
+      Object.entries(choice.effects).forEach(([dimension, value]) => {
+        this.gameState.scores[dimension] = Math.max(0, Math.min(100, 
+          this.gameState.scores[dimension] + value
+        ));
+      });
+    }
+
+    // Set career path if starting
+    if (this.gameState.currentScene === 'start') {
+      this.gameState.currentPath = choice.nextScene.split('_')[0];
+      this.gameState.gameStarted = true;
+      this.gameState.sceneNumber = 1;
+      this.applyCareerTheme(this.gameState.currentPath);
+    } else if (this.gameState.currentScene.includes('_')) {
+      this.gameState.sceneNumber++;
+    }
+
+    // Add button click animation
+    const choiceElements = document.querySelectorAll('.choice-card');
+    if (choiceElements[choiceIndex]) {
+      choiceElements[choiceIndex].style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        if (choiceElements[choiceIndex]) {
+          choiceElements[choiceIndex].style.transform = '';
+        }
+      }, 150);
+    }
+
+    // Animate score changes
+    this.animateScoreChanges(choice.effects);
+
+    // Move to next scene after animation
+    setTimeout(() => {
+      this.gameState.currentScene = choice.nextScene;
+      this.renderScene();
+      this.isTransitioning = false;
+    }, 600);
+  }
+
+  // SCORING SYSTEM
+  updateScoreboard() {
+    Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
+      const element = document.getElementById(`score${dimension.charAt(0).toUpperCase() + dimension.slice(1)}`);
+      if (element) {
+        element.textContent = Math.round(value);
+        
+        // Update score level styling
+        const scoreItem = element.closest('.score-item');
+        if (scoreItem) {
+          scoreItem.removeAttribute('data-level');
+          if (value >= 70) {
+            scoreItem.setAttribute('data-level', 'high');
+          } else if (value >= 40) {
+            scoreItem.setAttribute('data-level', 'medium');
+          } else {
+            scoreItem.setAttribute('data-level', 'low');
+          }
+        }
+      }
+    });
+  }
+
+  animateScoreChanges(effects) {
+    if (!effects) return;
+
+    Object.entries(effects).forEach(([dimension, value]) => {
+      if (value !== 0) {
+        const element = document.getElementById(`score${dimension.charAt(0).toUpperCase() + dimension.slice(1)}`);
+        if (element) {
+          element.classList.add('updating');
+          setTimeout(() => {
+            element.classList.remove('updating');
+          }, 500);
+        }
+      }
+    });
+  }
+
+  // PROGRESS SYSTEM
+  updateProgress() {
+    if (!this.gameState.currentPath) return;
+
+    const progressText = document.getElementById('progressText');
+    const steps = document.querySelectorAll('.progress-step');
+    
+    progressText.textContent = `Scene ${this.gameState.sceneNumber} of 6`;
+    
+    steps.forEach((step, index) => {
+      step.classList.remove('active', 'completed');
+      if (index < this.gameState.sceneNumber - 1) {
+        step.classList.add('completed');
+      } else if (index === this.gameState.sceneNumber - 1) {
+        step.classList.add('active');
+      }
+    });
+  }
+
+  // RANDOM EVENTS SYSTEM
+  checkRandomEvent() {
+    // Skip random events on start scene or if one is already showing
+    if (this.gameState.currentScene === 'start' || 
+        document.getElementById('randomEvent').style.display !== 'none') {
+      return;
+    }
+
+    // Check each random event for trigger
+    gameData.randomEvents.forEach(event => {
+      if (Math.random() < event.probability) {
+        // Check if event applies to current path
+        if (event.applicablePaths.includes('all') || 
+            event.applicablePaths.includes(this.gameState.currentPath)) {
+          this.showRandomEvent(event);
+        }
+      }
+    });
+  }
+
+  showRandomEvent(event) {
+    const randomEventEl = document.getElementById('randomEvent');
+    const textEl = randomEventEl.querySelector('.random-event-text');
+    
+    textEl.textContent = event.text;
+    randomEventEl.style.display = 'block';
+    
+    // Apply event effects
+    if (event.effects) {
+      Object.entries(event.effects).forEach(([dimension, value]) => {
+        this.gameState.scores[dimension] = Math.max(0, Math.min(100, 
+          this.gameState.scores[dimension] + value
+        ));
+      });
+      this.animateScoreChanges(event.effects);
+      this.updateScoreboard();
+    }
+    
+    // Record random event
+    this.gameState.randomEvents.push({
+      scene: this.gameState.currentScene,
+      event: event,
+      timestamp: Date.now()
+    });
+    
+    // Auto-dismiss after 4 seconds
+    if (this.randomEventTimeout) {
+      clearTimeout(this.randomEventTimeout);
+    }
+    this.randomEventTimeout = setTimeout(() => {
+      this.hideRandomEvent();
+    }, 4000);
+  }
+
+  hideRandomEvent() {
+    document.getElementById('randomEvent').style.display = 'none';
+    if (this.randomEventTimeout) {
+      clearTimeout(this.randomEventTimeout);
+      this.randomEventTimeout = null;
+    }
+  }
+
+  // ANIMATION SYSTEM
+  animateSceneTransition() {
+    if (!this.settings.animationsEnabled) return;
+
+    const sceneCard = document.getElementById('sceneCard');
+    sceneCard.classList.add('transitioning');
+    
+    setTimeout(() => {
+      sceneCard.classList.remove('transitioning');
+    }, 100);
+  }
+
+  // END SCREEN
+  showEndScreen() {
+    document.getElementById('sceneCard').style.display = 'none';
+    document.getElementById('endScreen').style.display = 'block';
+    document.getElementById('progressContainer').style.display = 'none';
+    
+    this.calculateAndDisplayCareerFit();
+    this.renderJourneySummary();
+    this.renderFinalScores();
+  }
+
+  calculateAndDisplayCareerFit() {
+    if (!this.gameState.currentPath) return;
+
+    const pathWeights = gameData.careerFitWeights[this.gameState.currentPath];
+    let totalFit = 0;
+    
+    Object.entries(pathWeights).forEach(([dimension, weight]) => {
+      totalFit += (this.gameState.scores[dimension] * weight);
+    });
+
+    const fitPercentage = Math.round(totalFit);
+    const fitLevel = gameData.fitLevels.find(level => 
+      fitPercentage >= level.min && fitPercentage <= level.max
+    );
+
+    // Update fit display
+    document.getElementById('fitPercentage').textContent = `${fitPercentage}%`;
+    document.getElementById('fitEmoji').textContent = fitLevel.emoji;
+    document.getElementById('fitLabel').textContent = fitLevel.label;
+    document.getElementById('fitExplanation').textContent = fitLevel.description;
+    
+    // Update CSS custom property for circle animation
+    document.documentElement.style.setProperty('--fit-percentage', fitPercentage);
+  }
+
+  renderJourneySummary() {
+    const journeyPath = document.getElementById('journeyPath');
+    journeyPath.innerHTML = '';
+    
+    // Create journey nodes based on choices
+    this.gameState.choices.forEach((choice, index) => {
+      if (choice.scene !== 'start') {
+        const node = document.createElement('div');
+        node.className = 'journey-node';
+        node.textContent = index;
+        node.title = choice.choiceText;
+        journeyPath.appendChild(node);
+      }
+    });
+  }
+
+  renderFinalScores() {
+    const finalScores = document.getElementById('finalScores');
+    finalScores.innerHTML = '';
+    
+    Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
+      const dimensionData = gameData.scoreDimensions[dimension];
+      if (!dimensionData) return;
+      
+      const scoreBar = document.createElement('div');
+      scoreBar.className = 'score-bar';
+      scoreBar.innerHTML = `
+        <div class="score-bar-label">
+          <span class="score-icon">${dimensionData.icon}</span>
+          <span>${dimensionData.label}</span>
+        </div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width: ${value}%"></div>
+        </div>
+        <div class="score-bar-value">${Math.round(value)}</div>
+      `;
+      
+      finalScores.appendChild(scoreBar);
+      
+      // Animate bar fill
+      setTimeout(() => {
+        const fill = scoreBar.querySelector('.score-bar-fill');
+        fill.style.width = '0%';
+        setTimeout(() => {
+          fill.style.width = `${value}%`;
+        }, 100);
+      }, 100);
+    });
+  }
+
+  // DIALOG MANAGEMENT
+  showHelp() {
+    document.getElementById('helpDialog').style.display = 'flex';
+  }
+
+  hideHelp() {
+    document.getElementById('helpDialog').style.display = 'none';
+  }
+
+  showSummary() {
+    document.getElementById('summaryDialog').style.display = 'flex';
+    this.renderSummaryContent();
+  }
+
+  hideSummary() {
+    document.getElementById('summaryDialog').style.display = 'none';
+  }
+
+  switchTab(tabId) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.style.display = 'none';
+    });
+    document.getElementById(`${tabId}Tab`).style.display = 'block';
+  }
+
+  renderSummaryContent() {
+    // Journey tab content
+    const journeyContent = document.getElementById('summaryJourneyContent');
+    if (this.gameState.currentPath) {
+      const pathData = gameData.careerPaths[this.gameState.currentPath];
+      journeyContent.innerHTML = `
+        <div class="journey-summary-card">
+          <h4>${pathData.icon} ${pathData.label}</h4>
+          <p>${pathData.description}</p>
+          <p><strong>Total Scenes Completed:</strong> ${this.gameState.choices.length}</p>
+        </div>
+      `;
+    }
+    
+    // Scores tab content - reuse final scores rendering
+    const scoresContent = document.getElementById('summaryScoresContent');
+    scoresContent.innerHTML = '<div class="score-bars" id="summaryScoreBars"></div>';
+    
+    // Decisions tab content
+    const decisionsContent = document.getElementById('summaryDecisionsContent');
+    let decisionsHTML = '<div class="decisions-list">';
+    this.gameState.choices.forEach((choice, index) => {
+      decisionsHTML += `
+        <div class="decision-item">
+          <h5>Scene ${index + 1}: ${choice.scene}</h5>
+          <p>${choice.choiceText}</p>
+        </div>
+      `;
+    });
+    decisionsHTML += '</div>';
+    decisionsContent.innerHTML = decisionsHTML;
+  }
+
+  // GAME CONTROLS
+  restartGame() {
+    // Reset game state
+    this.gameState = {
+      currentScene: 'start',
+      currentPath: null,
+      sceneNumber: 0,
+      scores: { ...gameData.initialScores },
+      choices: [],
+      randomEvents: [],
+      gameStarted: false,
+      onboardingCompleted: this.settings.onboardingDone
+    };
+    
+    // Reset UI
+    document.getElementById('endScreen').style.display = 'none';
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('randomEvent').style.display = 'none';
+    
+    // Clear any active timeouts
+    if (this.randomEventTimeout) {
+      clearTimeout(this.randomEventTimeout);
+      this.randomEventTimeout = null;
+    }
+    
+    // Reset theme
+    const header = document.querySelector('.header');
+    header.style.background = '';
+    
+    // Render start scene
+    this.renderScene();
+    
+    console.log('🔄 Game restarted');
+  }
+
+  toggleMusic() {
+    this.settings.musicEnabled = !this.settings.musicEnabled;
+    const musicBtn = document.getElementById('musicBtn');
+    musicBtn.style.opacity = this.settings.musicEnabled ? '1' : '0.5';
+    
+    // In a real implementation, this would control background music
+    console.log('🎵 Music toggled:', this.settings.musicEnabled ? 'ON' : 'OFF');
+  }
+
+  saveGame() {
+    // Since localStorage is not available in sandbox, we'll just show a message
+    this.showTempMessage('💾 Game state saved! (In-memory only)');
+    console.log('💾 Game saved (in-memory):', this.gameState);
+  }
+
+  showTempMessage(message) {
+    // Create temporary message overlay
+    const messageEl = document.createElement('div');
+    messageEl.className = 'temp-message';
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16) var(--space-24);
+      color: var(--color-text);
+      z-index: 2000;
+      animation: fadeInUp 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(messageEl);
+    
+    setTimeout(() => {
+      messageEl.style.animation = 'fadeOut 0.3s ease-out forwards';
+      setTimeout(() => {
+        document.body.removeChild(messageEl);
+      }, 300);
+    }, 2000);
+  }
 }
 
-function endGame() {
-  state.ended = true; persist();
-  els.scene.hidden = true; els.end.hidden = false;
-  // optional: simple textual reflection
-  els.reflections.innerHTML = '';
-  const p = CAREER_PROFILES[state.path||'guru'];
-  const li = document.createElement('li');
-  li.textContent = `Terima kasih telah bermain. Pertimbangkan tips peningkatan sesuai jalur ${p.label.toLowerCase()} dan hasil rekomendasi.`;
-  els.reflections.appendChild(li);
-}
+// Initialize the game when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Add fade out animation keyframes to document
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-10px);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Initialize the game
+  window.game = new CareerExplorationGame();
+});
 
-function exportLogsCsv() {
-  const logs = JSON.parse(localStorage.getItem('kp_logs') || '[]');
-  const rows = [["session_id","started_at","ended","path","scores","steps"]];
-  for (const s of logs) rows.push([s.sessionId, s.startedAt || "", String(!!s.ended), s.path||"", JSON.stringify(s.scores), JSON.stringify(s.log)]);
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'karirmu-pilihanmu-logs.csv';
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1500);
-}
-
-function restart() {
-  if (!confirm("Mulai ulang sesi ini? Progres sesi akan direset.")) return;
-  state = newState(); persist(); renderScene(); els.btnContinue.disabled = false;
-}
-
-function init() {
-  scenes = window.GAME_DATA.scenes; startScene = window.GAME_DATA.start || "start";
-
-  const saved = loadPersisted();
-  if (saved && !saved.ended) { state = saved; els.btnContinue.disabled = false; }
-
-  els.btnNew.addEventListener('click', () => { state = newState(); persist(); renderScene(); els.btnContinue.disabled = false; });
-  els.btnContinue.addEventListener('click', () => { if (!state) { const s = loadPersisted(); if (s) state = s; } if (state.ended) state = newState(); renderScene(); });
-  els.btnRestart.addEventListener('click', restart);
-  els.btnExport.addEventListener('click', exportLogsCsv);
-  els.btnHelp.addEventListener('click', () => els.dlgHelp.showModal());
-  els.btnCloseHelp.addEventListener('click', () => els.dlgHelp.close());
-  els.btnSumReplay.addEventListener('click', () => { els.dlgSummary.close(); state = newState(); persist(); renderScene(); });
-  els.btnSumFinish.addEventListener('click', () => { els.dlgSummary.close(); endGame(); });
-
-  // Audio toggles (placeholders)
-  els.btnMusic.addEventListener('click', ()=>{ MUSIC_ON=!MUSIC_ON; els.btnMusic.textContent = MUSIC_ON ? "🎵 Musik: ON" : "🎵 Musik: OFF"; });
-  els.btnSfx.addEventListener('click', ()=>{ SFX_ON=!SFX_ON; els.btnSfx.textContent = SFX_ON ? "🔊 SFX: ON" : "🔊 SFX: OFF"; });
-  els.btnTts.addEventListener('click', ()=>{ TTS_ON=!TTS_ON; els.btnTts.textContent = TTS_ON ? "🗣️ Narator: ON" : "🗣️ Narator: OFF"; });
-
-  if (!saved) { state = newState(); persist(); renderScene(); }
-}
-document.addEventListener('DOMContentLoaded', init);
+// Expose game for debugging
+window.gameData = gameData;
