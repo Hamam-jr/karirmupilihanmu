@@ -1,563 +1,781 @@
-// ...existing code...
-// === DATA GAME PENUH ===
-// start scene, peta karakter (ikon/ilustrasi), dan seluruh skenario per jalur.
-
-window.GAME_DATA = {
-  "start": "start",
-  "characters": {
-    "guru": {"label":"Guru Indonesia","portrait":"assets/characters/guru.svg"},
-    "wira": {"label":"Wirausaha IT","portrait":"assets/characters/wirausaha.svg"},
-    "s2":   {"label":"Mahasiswa S2","portrait":"assets/characters/s2.svg"},
-    "ind":  {"label":"Profesional Industri","portrait":"assets/characters/industri.svg"}
+// Complete Game Data for IT Career Exploration Game
+const gameData = {
+  // Game metadata
+  meta: {
+    title: "Karirmu, Pilihanmu: Eksplorasi Karir IT",
+    subtitle: "Game Naratif Interaktif untuk Mahasiswa Pendidikan Teknik Informatika",
+    version: "6.0",
+    author: "Enhanced Career Game"
   },
-  "scenes": {
-    "start": {
-      "text": "Kamu adalah mahasiswa semester 8 Pendidikan Teknik Informatika. Wisuda sebentar lagi. Apa langkah karirmu setelah lulus?",
-      "choices": [
-        {"label":"A. Melamar Guru ASN","to":"guru_1","effects":{"minat":0}},
-        {"label":"B. Menjadi Wirausaha (Startup IT)","to":"wira_1","effects":{"minat":0}},
-        {"label":"C. Melanjutkan S2","to":"s2_1","effects":{"minat":0}},
-        {"label":"D. Masuk Industri (non-pendidikan)","to":"ind_1","effects":{"minat":0}}
-      ],
-      "random_events": [],
-      "char": "guru"
-    },
 
-    /* ======== GURU ASN ======== */
-    "guru_1": {
-      "text":"Setelah lulus, ada pengumuman penerimaan CPNS untuk guru TIK. Prosesnya panjang dan mungkin menempatkanmu di daerah terpencil.",
-      "choices":[
-        {"label":"A. Mendaftar CPNS","effects":{"minat":10},"to":"guru_2"},
-        {"label":"B. Mencari kerja di sekolah swasta","effects":{"keseimbangan":5},"to":"guru_2"},
-        {"label":"C. Mengajar privat sambil mengevaluasi opsi lain","effects":{"nilai":5},"to":"guru_2"}
-      ],
-      "random_events":[{"text":"Kamu bertemu mantan dosen yang menawarkan bimbingan CPNS (+5 Minat)","p":0.35,"effects":{"minat":5}}],
-      "char":"guru"
+  // Career paths configuration
+  careerPaths: {
+    guru: {
+      id: "guru",
+      label: "Guru ASN",
+      icon: "👨‍🏫",
+      colorPrimary: "#22c55e",
+      colorAccent: "#86efac",
+      description: "Jalur pendidik dengan status ASN",
+      characterName: "Pak Budi - Guru Senior"
     },
-    "guru_2": {
-      "text":"Ujian SKD tinggal 2 minggu lagi. Kamu juga diminta membantu keluarga di rumah. Bagaimana kamu mengatur waktu?",
-      "choices":[
-        {"label":"A. Belajar intensif","effects":{"minat":10,"keseimbangan":-5},"to":"guru_3"},
-        {"label":"B. Belajar seadanya sambil membantu","effects":{"keseimbangan":10,"minat":-5},"to":"guru_3"},
-        {"label":"C. Ikut kursus CPNS berbayar","effects":{"penghasilan":5,"minat":5},"to":"guru_3"}
-      ],
-      "random_events":[{"text":"Kamu sakit flu menjelang ujian (-5 Keseimbangan)","p":0.25,"effects":{"keseimbangan":-5}}],
-      "char":"guru"
+    wira: {
+      id: "wira",
+      label: "Wirausaha IT",
+      icon: "🚀",
+      colorPrimary: "#f97316",
+      colorAccent: "#fdba74",
+      description: "Membangun startup teknologi sendiri",
+      characterName: "Sarah - Tech Entrepreneur"
     },
-    "guru_3": {
-      "text":"Kamu lulus CPNS, tetapi ditempatkan di kabupaten terpencil dengan akses terbatas.",
-      "choices":[
-        {"label":"A. Menerima penempatan","effects":{"nilai":15,"keseimbangan":-5},"to":"guru_4"},
-        {"label":"B. Menolak dan mundur","effects":{"minat":-10},"to":"guru_4"},
-        {"label":"C. Minta penempatan ulang","effects":{"penghasilan":5},"to":"guru_4"}
-      ],
-      "random_events":[
-        {"text":"Sekolah mendapat dana teknologi baru (+5 Kepuasan)","p":0.3,"effects":{"kepuasan":5}},
-        {"text":"Penempatanmu ditunda oleh dinas (-5 Keseimbangan)","p":0.25,"effects":{"keseimbangan":-5}}
-      ],
-      "char":"guru"
+    s2: {
+      id: "s2",
+      label: "S2/Academia",
+      icon: "🎓",
+      colorPrimary: "#3b82f6",
+      colorAccent: "#93c5fd",
+      description: "Melanjutkan studi dan riset",
+      characterName: "Dr. Andi - Researcher"
     },
-    "guru_4": {
-      "text":"Tahun pertama mengajar: kamu menyesuaikan metode pengajaran dengan siswa.",
-      "choices":[
-        {"label":"A. Gunakan metode inovatif","effects":{"kepuasan":10},"to":"guru_5"},
-        {"label":"B. Gunakan metode tradisional","effects":{"keseimbangan":5},"to":"guru_5"},
-        {"label":"C. Terlibat dalam ekstrakurikuler","effects":{"nilai":10},"to":"guru_5"}
-      ],
-      "random_events":[{"text":"Orang tua siswa mengeluh tentang metode pengajaranmu (-5 Nilai Diri)","p":0.25,"effects":{"nilai":-5}}],
-      "char":"guru"
-    },
-    "guru_5": {
-      "text":"Pengembangan karir: kesempatan terbuka, kamu memilih?",
-      "choices":[
-        {"label":"A. Kejar promosi sebagai kepala sekolah","effects":{"penghasilan":15},"to":"guru_6"},
-        {"label":"B. Ikut pelatihan guru nasional","effects":{"minat":10},"to":"guru_6"},
-        {"label":"C. Pindah ke sekolah di kota besar","effects":{"keseimbangan":10},"to":"guru_6"}
-      ],
-      "random_events":[{"text":"Kamu diundang sebagai pembicara di seminar pendidikan (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"guru"
-    },
-    "guru_6": {
-      "text":"Setelah 10 tahun, kamu merefleksikan karirmu sebagai guru.",
-      "choices":[
-        {"label":"A. Tetap mengajar dan menjadi mentor","effects":{"nilai":15},"to":"END"},
-        {"label":"B. Beralih ke administrasi pendidikan","effects":{"penghasilan":15},"to":"END"},
-        {"label":"C. Mulai proyek pendidikan sendiri","effects":{"minat":10},"to":"END"}
-      ],
-      "random_events":[{"text":"Pasanganmu mendapat tawaran kerja di kota lain (-5 Keseimbangan)","p":0.4,"effects":{"keseimbangan":-5}}],
-      "char":"guru"
-    },
-
-    /* ======== WIRAUSAHA ======== */
-    "wira_1": {
-      "text":"Kamu ingin memulai startup IT. Temanmu menawarkan ide berbeda. Mana yang kamu pilih?",
-      "choices":[
-        {"label":"A. Aplikasi edukasi interaktif","effects":{"minat":15},"to":"wira_2"},
-        {"label":"B. Marketplace untuk UMKM","effects":{"penghasilan":10},"to":"wira_2"},
-        {"label":"C. Alat edutech untuk guru","effects":{"nilai":10},"to":"wira_2"}
-      ],
-      "random_events":[{"text":"Kamu bertemu investor di acara kampus (+5 Nilai Diri)","p":0.3,"effects":{"nilai":5}}],
-      "char":"wira"
-    },
-    "wira_2": {
-      "text":"Startupmu butuh dana. Bagaimana kamu mendapatkannya?",
-      "choices":[
-        {"label":"A. Pinjam ke bank","effects":{"penghasilan":10,"keseimbangan":-10},"to":"wira_3"},
-        {"label":"B. Cari investor","effects":{"nilai":15},"to":"wira_3"},
-        {"label":"C. Bootstrap dengan tabungan","effects":{"nilai":15,"penghasilan":-5},"to":"wira_3"}
-      ],
-      "random_events":[{"text":"Pasar teknologi crash (-10 Penghasilan)","p":0.25,"effects":{"penghasilan":-10}}],
-      "char":"wira"
-    },
-    "wira_3": {
-      "text":"Pengembangan produk pertama. Strategimu?",
-      "choices":[
-        {"label":"A. Rekrut tim kecil","effects":{"kepuasan":10},"to":"wira_4"},
-        {"label":"B. Kembangkan MVP sendiri","effects":{"minat":10},"to":"wira_4"},
-        {"label":"C. Uji pasar terlebih dahulu","effects":{"penghasilan":5},"to":"wira_4"}
-      ],
-      "random_events":[{"text":"Produkmu mendapat ulasan positif dari influencer (+10 Minat)","p":0.3,"effects":{"minat":10}}],
-      "char":"wira"
-    },
-    "wira_4": {
-      "text":"Peluncuran produk: persaingan ketat.",
-      "choices":[
-        {"label":"A. Pemasaran agresif","effects":{"penghasilan":15,"keseimbangan":-10},"to":"wira_5"},
-        {"label":"B. Pemasaran konservatif","effects":{"keseimbangan":5},"to":"wira_5"},
-        {"label":"C. Kolaborasi dengan startup lain","effects":{"nilai":10},"to":"wira_5"}
-      ],
-      "random_events":[{"text":"Klien besar membatalkan kontrak (-10 Penghasilan)","p":0.25,"effects":{"penghasilan":-10}}],
-      "char":"wira"
-    },
-    "wira_5": {
-      "text":"Startupmu mulai berkembang. Langkah selanjutnya?",
-      "choices":[
-        {"label":"A. Skala bisnis","effects":{"penghasilan":15},"to":"wira_6"},
-        {"label":"B. Jual perusahaan","effects":{"penghasilan":20,"minat":-10},"to":"wira_6"},
-        {"label":"C. Go public (IPO)","effects":{"kepuasan":15},"to":"wira_6"}
-      ],
-      "random_events":[{"text":"Startupmu masuk daftar startup terbaik (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"wira"
-    },
-    "wira_6": {
-      "text":"Setelah 10 tahun, refleksi perjalanan wirausaha.",
-      "choices":[
-        {"label":"A. Lanjutkan sebagai CEO","effects":{"minat":15},"to":"END"},
-        {"label":"B. Mulai startup baru","effects":{"nilai":10},"to":"END"},
-        {"label":"C. Jadi investor untuk startup lain","effects":{"penghasilan":15},"to":"END"}
-      ],
-      "random_events":[{"text":"Keluargamu meminta bantuan finansial (-10 Penghasilan)","p":0.4,"effects":{"penghasilan":-10}}],
-      "char":"wira"
-    },
-
-    /* ======== S2/AKADEMIA ======== */
-    "s2_1": {
-      "text":"Kamu ingin melanjutkan S2. Pilih universitas impianmu.",
-      "choices":[
-        {"label":"A. Universitas dalam negeri","effects":{"keseimbangan":10},"to":"s2_2"},
-        {"label":"B. Universitas luar negeri","effects":{"minat":15,"keseimbangan":-5},"to":"s2_2"},
-        {"label":"C. Program online","effects":{"penghasilan":5},"to":"s2_2"}
-      ],
-      "random_events":[{"text":"Kamu mendapat rekomendasi dari dosen (+5 Minat)","p":0.3,"effects":{"minat":5}}],
-      "char":"s2"
-    },
-    "s2_2": {
-      "text":"Pendanaan studi S2, pilih skema:",
-      "choices":[
-        {"label":"A. Ajukan beasiswa","effects":{"penghasilan":10},"to":"s2_3"},
-        {"label":"B. Ambil pinjaman","effects":{"penghasilan":5,"keseimbangan":-5},"to":"s2_3"},
-        {"label":"C. Kerja paruh waktu","effects":{"keseimbangan":10},"to":"s2_3"}
-      ],
-      "random_events":[{"text":"Kamu gagal mendapat beasiswa (-5 Penghasilan)","p":0.25,"effects":{"penghasilan":-5}}],
-      "char":"s2"
-    },
-    "s2_3": {
-      "text":"Kehidupan akademik dimulai. Fokus tahun pertama?",
-      "choices":[
-        {"label":"A. Fokus pada riset","effects":{"minat":10},"to":"s2_4"},
-        {"label":"B. Ikut kegiatan kampus","effects":{"nilai":10},"to":"s2_4"},
-        {"label":"C. Bangun jaringan profesional","effects":{"penghasilan":5},"to":"s2_4"}
-      ],
-      "random_events":[{"text":"Risetmu diterbitkan di jurnal ternama (+10 Minat)","p":0.3,"effects":{"minat":10}}],
-      "char":"s2"
-    },
-    "s2_4": {
-      "text":"Tesis dan kelulusan: tentukan fokus.",
-      "choices":[
-        {"label":"A. Topik inovatif","effects":{"kepuasan":15},"to":"s2_5"},
-        {"label":"B. Topik praktis","effects":{"penghasilan":10},"to":"s2_5"},
-        {"label":"C. Kolaborasi dengan dosen","effects":{"nilai":10},"to":"s2_5"}
-      ],
-      "random_events":[{"text":"Pembimbingmu sulit dihubungi (-5 Keseimbangan)","p":0.3,"effects":{"keseimbangan":-5}}],
-      "char":"s2"
-    },
-    "s2_5": {
-      "text":"Pasca kelulusan S2, langkah berikut?",
-      "choices":[
-        {"label":"A. Kejar karir akademia","effects":{"nilai":15},"to":"s2_6"},
-        {"label":"B. Masuk industri","effects":{"penghasilan":15},"to":"s2_6"},
-        {"label":"C. Mulai wirausaha","effects":{"minat":10},"to":"s2_6"}
-      ],
-      "random_events":[{"text":"Kamu diundang sebagai dosen tamu (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"s2"
-    },
-    "s2_6": {
-      "text":"Setelah 10 tahun, refleksi perjalanan akademikmu.",
-      "choices":[
-        {"label":"A. Jadi profesor","effects":{"minat":15},"to":"END"},
-        {"label":"B. Pindah ke industri","effects":{"penghasilan":15},"to":"END"},
-        {"label":"C. Tulis buku akademik","effects":{"nilai":10},"to":"END"}
-      ],
-      "random_events":[{"text":"Tekanan keluarga terkait rencana hidup (-5 Keseimbangan)","p":0.35,"effects":{"keseimbangan":-5}}],
-      "char":"s2"
-    },
-
-    /* ======== INDUSTRI ======== */
-    "ind_1": {
-      "text":"Kamu ingin masuk industri. Pilih jenis perusahaan.",
-      "choices":[
-        {"label":"A. Startup teknologi","effects":{"minat":10,"keseimbangan":-5},"to":"ind_2"},
-        {"label":"B. Perusahaan besar","effects":{"penghasilan":15},"to":"ind_2"},
-        {"label":"C. Freelance","effects":{"nilai":10},"to":"ind_2"}
-      ],
-      "random_events":[{"text":"Kamu bertemu koneksi di acara networking (+5 Penghasilan)","p":0.3,"effects":{"penghasilan":5}}],
-      "char":"ind"
-    },
-    "ind_2": {
-      "text":"Proses wawancara: strategi persiapanmu?",
-      "choices":[
-        {"label":"A. Persiapan menyeluruh","effects":{"kepuasan":10},"to":"ind_3"},
-        {"label":"B. Manfaatkan koneksi","effects":{"nilai":10},"to":"ind_3"},
-        {"label":"C. Terima tawaran pertama","effects":{"penghasilan":5},"to":"ind_3"}
-      ],
-      "random_events":[{"text":"Wawancaramu berjalan buruk (-5 Minat)","p":0.25,"effects":{"minat":-5}}],
-      "char":"ind"
-    },
-    "ind_3": {
-      "text":"Karir awal dimulai. Fokus adaptasi?",
-      "choices":[
-        {"label":"A. Seimbangkan kerja dan hidup","effects":{"keseimbangan":10},"to":"ind_4"},
-        {"label":"B. Kembangkan keterampilan","effects":{"minat":10},"to":"ind_4"},
-        {"label":"C. Navigasi politik kantor","effects":{"penghasilan":5},"to":"ind_4"}
-      ],
-      "random_events":[{"text":"Perusahaan diakuisisi (+15 Penghasilan)","p":0.25,"effects":{"penghasilan":15}}],
-      "char":"ind"
-    },
-    "ind_4": {
-      "text":"Karir menengah: pilih langkah strategis.",
-      "choices":[
-        {"label":"A. Spesialisasi di bidangmu","effects":{"penghasilan":15},"to":"ind_5"},
-        {"label":"B. Ganti pekerjaan","effects":{"minat":10},"to":"ind_5"},
-        {"label":"C. Pindah lokasi","effects":{"keseimbangan":10},"to":"ind_5"}
-      ],
-      "random_events":[{"text":"Kamu terlibat konflik dengan atasan (-5 Keseimbangan)","p":0.25,"effects":{"keseimbangan":-5}}],
-      "char":"ind"
-    },
-    "ind_5": {
-      "text":"Karir senior: apa fokusmu?",
-      "choices":[
-        {"label":"A. Jadi mentor","effects":{"nilai":15},"to":"ind_6"},
-        {"label":"B. Kejar peran eksekutif","effects":{"penghasilan":15},"to":"ind_6"},
-        {"label":"C. Rencanakan pensiun dini","effects":{"keseimbangan":10},"to":"ind_6"}
-      ],
-      "random_events":[{"text":"Kamu memenangkan penghargaan industri (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"ind"
-    },
-    "ind_6": {
-      "text":"Setelah 10 tahun, refleksi karirmu di industri.",
-      "choices":[
-        {"label":"A. Tetap di industri","effects":{"penghasilan":15},"to":"END"},
-        {"label":"B. Mulai bisnis sendiri","effects":{"minat":10},"to":"END"},
-        {"label":"C. Jadi konsultan","effects":{"nilai":10},"to":"END"}
-      ],
-      "random_events":[{"text":"Kamu menghadapi krisis kesehatan (-5 Keseimbangan)","p":0.35,"effects":{"keseimbangan":-5}}],
-      "char":"ind"
+    ind: {
+      id: "ind",
+      label: "Industri",
+      icon: "💼",
+      colorPrimary: "#a855f7",
+      colorAccent: "#d8b4fe",
+      description: "Bekerja di perusahaan teknologi",
+      characterName: "Maya - Software Engineer"
     }
-  }
-};
-// ...existing code...
-``` 
-
-Tes singkat setelah perbaikan:
-- Muat halaman di browser dan cek console (F12) untuk error.
-- Jika masih error, laporkan pesan console agar saya bantu perbaiki.// filepath: c:\Users\mohha\Downloads\karirmu-pilihanmu-web-v5\game_data.js
-// ...existing code...
-// === DATA GAME PENUH ===
-// start scene, peta karakter (ikon/ilustrasi), dan seluruh skenario per jalur.
-
-window.GAME_DATA = {
-  "start": "start",
-  "characters": {
-    "guru": {"label":"Guru Indonesia","portrait":"assets/characters/guru.svg"},
-    "wira": {"label":"Wirausaha IT","portrait":"assets/characters/wirausaha.svg"},
-    "s2":   {"label":"Mahasiswa S2","portrait":"assets/characters/s2.svg"},
-    "ind":  {"label":"Profesional Industri","portrait":"assets/characters/industri.svg"}
   },
-  "scenes": {
-    "start": {
-      "text": "Kamu adalah mahasiswa semester 8 Pendidikan Teknik Informatika. Wisuda sebentar lagi. Apa langkah karirmu setelah lulus?",
-      "choices": [
-        {"label":"A. Melamar Guru ASN","to":"guru_1","effects":{"minat":0}},
-        {"label":"B. Menjadi Wirausaha (Startup IT)","to":"wira_1","effects":{"minat":0}},
-        {"label":"C. Melanjutkan S2","to":"s2_1","effects":{"minat":0}},
-        {"label":"D. Masuk Industri (non-pendidikan)","to":"ind_1","effects":{"minat":0}}
-      ],
-      "random_events": [],
-      "char": "guru"
-    },
 
-    /* ======== GURU ASN ======== */
-    "guru_1": {
-      "text":"Setelah lulus, ada pengumuman penerimaan CPNS untuk guru TIK. Prosesnya panjang dan mungkin menempatkanmu di daerah terpencil.",
-      "choices":[
-        {"label":"A. Mendaftar CPNS","effects":{"minat":10},"to":"guru_2"},
-        {"label":"B. Mencari kerja di sekolah swasta","effects":{"keseimbangan":5},"to":"guru_2"},
-        {"label":"C. Mengajar privat sambil mengevaluasi opsi lain","effects":{"nilai":5},"to":"guru_2"}
-      ],
-      "random_events":[{"text":"Kamu bertemu mantan dosen yang menawarkan bimbingan CPNS (+5 Minat)","p":0.35,"effects":{"minat":5}}],
-      "char":"guru"
-    },
-    "guru_2": {
-      "text":"Ujian SKD tinggal 2 minggu lagi. Kamu juga diminta membantu keluarga di rumah. Bagaimana kamu mengatur waktu?",
-      "choices":[
-        {"label":"A. Belajar intensif","effects":{"minat":10,"keseimbangan":-5},"to":"guru_3"},
-        {"label":"B. Belajar seadanya sambil membantu","effects":{"keseimbangan":10,"minat":-5},"to":"guru_3"},
-        {"label":"C. Ikut kursus CPNS berbayar","effects":{"penghasilan":5,"minat":5},"to":"guru_3"}
-      ],
-      "random_events":[{"text":"Kamu sakit flu menjelang ujian (-5 Keseimbangan)","p":0.25,"effects":{"keseimbangan":-5}}],
-      "char":"guru"
-    },
-    "guru_3": {
-      "text":"Kamu lulus CPNS, tetapi ditempatkan di kabupaten terpencil dengan akses terbatas.",
-      "choices":[
-        {"label":"A. Menerima penempatan","effects":{"nilai":15,"keseimbangan":-5},"to":"guru_4"},
-        {"label":"B. Menolak dan mundur","effects":{"minat":-10},"to":"guru_4"},
-        {"label":"C. Minta penempatan ulang","effects":{"penghasilan":5},"to":"guru_4"}
-      ],
-      "random_events":[
-        {"text":"Sekolah mendapat dana teknologi baru (+5 Kepuasan)","p":0.3,"effects":{"kepuasan":5}},
-        {"text":"Penempatanmu ditunda oleh dinas (-5 Keseimbangan)","p":0.25,"effects":{"keseimbangan":-5}}
-      ],
-      "char":"guru"
-    },
-    "guru_4": {
-      "text":"Tahun pertama mengajar: kamu menyesuaikan metode pengajaran dengan siswa.",
-      "choices":[
-        {"label":"A. Gunakan metode inovatif","effects":{"kepuasan":10},"to":"guru_5"},
-        {"label":"B. Gunakan metode tradisional","effects":{"keseimbangan":5},"to":"guru_5"},
-        {"label":"C. Terlibat dalam ekstrakurikuler","effects":{"nilai":10},"to":"guru_5"}
-      ],
-      "random_events":[{"text":"Orang tua siswa mengeluh tentang metode pengajaranmu (-5 Nilai Diri)","p":0.25,"effects":{"nilai":-5}}],
-      "char":"guru"
-    },
-    "guru_5": {
-      "text":"Pengembangan karir: kesempatan terbuka, kamu memilih?",
-      "choices":[
-        {"label":"A. Kejar promosi sebagai kepala sekolah","effects":{"penghasilan":15},"to":"guru_6"},
-        {"label":"B. Ikut pelatihan guru nasional","effects":{"minat":10},"to":"guru_6"},
-        {"label":"C. Pindah ke sekolah di kota besar","effects":{"keseimbangan":10},"to":"guru_6"}
-      ],
-      "random_events":[{"text":"Kamu diundang sebagai pembicara di seminar pendidikan (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"guru"
-    },
-    "guru_6": {
-      "text":"Setelah 10 tahun, kamu merefleksikan karirmu sebagai guru.",
-      "choices":[
-        {"label":"A. Tetap mengajar dan menjadi mentor","effects":{"nilai":15},"to":"END"},
-        {"label":"B. Beralih ke administrasi pendidikan","effects":{"penghasilan":15},"to":"END"},
-        {"label":"C. Mulai proyek pendidikan sendiri","effects":{"minat":10},"to":"END"}
-      ],
-      "random_events":[{"text":"Pasanganmu mendapat tawaran kerja di kota lain (-5 Keseimbangan)","p":0.4,"effects":{"keseimbangan":-5}}],
-      "char":"guru"
-    },
+  // Score dimensions
+  scoreDimensions: {
+    minat: { label: "Minat", icon: "🎯", description: "Passion dan motivasi internal" },
+    keseimbangan: { label: "Keseimbangan", icon: "⚖️", description: "Work-life balance" },
+    penghasilan: { label: "Penghasilan", icon: "💰", description: "Stabilitas finansial" },
+    nilai: { label: "Nilai Diri", icon: "💎", description: "Kepercayaan diri dan aktualisasi" },
+    kepuasan: { label: "Kepuasan", icon: "😊", description: "Fulfillment dan kebahagiaan" }
+  },
 
-    /* ======== WIRAUSAHA ======== */
-    "wira_1": {
-      "text":"Kamu ingin memulai startup IT. Temanmu menawarkan ide berbeda. Mana yang kamu pilih?",
-      "choices":[
-        {"label":"A. Aplikasi edukasi interaktif","effects":{"minat":15},"to":"wira_2"},
-        {"label":"B. Marketplace untuk UMKM","effects":{"penghasilan":10},"to":"wira_2"},
-        {"label":"C. Alat edutech untuk guru","effects":{"nilai":10},"to":"wira_2"}
-      ],
-      "random_events":[{"text":"Kamu bertemu investor di acara kampus (+5 Nilai Diri)","p":0.3,"effects":{"nilai":5}}],
-      "char":"wira"
+  // Random events data
+  randomEvents: [
+    {
+      id: "teknologi_baru",
+      text: "🚀 Teknologi AI baru muncul dan mengubah landscape industri!",
+      probability: 0.15,
+      effects: { minat: 5, nilai: 3 },
+      applicablePaths: ["all"]
     },
-    "wira_2": {
-      "text":"Startupmu butuh dana. Bagaimana kamu mendapatkannya?",
-      "choices":[
-        {"label":"A. Pinjam ke bank","effects":{"penghasilan":10,"keseimbangan":-10},"to":"wira_3"},
-        {"label":"B. Cari investor","effects":{"nilai":15},"to":"wira_3"},
-        {"label":"C. Bootstrap dengan tabungan","effects":{"nilai":15,"penghasilan":-5},"to":"wira_3"}
-      ],
-      "random_events":[{"text":"Pasar teknologi crash (-10 Penghasilan)","p":0.25,"effects":{"penghasilan":-10}}],
-      "char":"wira"
+    {
+      id: "ekonomi_krisis",
+      text: "📉 Krisis ekonomi mempengaruhi stabilitas pekerjaan di berbagai sektor.",
+      probability: 0.1,
+      effects: { penghasilan: -8, keseimbangan: -5 },
+      applicablePaths: ["all"]
     },
-    "wira_3": {
-      "text":"Pengembangan produk pertama. Strategimu?",
-      "choices":[
-        {"label":"A. Rekrut tim kecil","effects":{"kepuasan":10},"to":"wira_4"},
-        {"label":"B. Kembangkan MVP sendiri","effects":{"minat":10},"to":"wira_4"},
-        {"label":"C. Uji pasar terlebih dahulu","effects":{"penghasilan":5},"to":"wira_4"}
-      ],
-      "random_events":[{"text":"Produkmu mendapat ulasan positif dari influencer (+10 Minat)","p":0.3,"effects":{"minat":10}}],
-      "char":"wira"
+    {
+      id: "pelatihan_gratis",
+      text: "🎓 Ada kesempatan pelatihan gratis dari Google untuk meningkatkan skill!",
+      probability: 0.2,
+      effects: { minat: 8, nilai: 5 },
+      applicablePaths: ["all"]
     },
-    "wira_4": {
-      "text":"Peluncuran produk: persaingan ketat.",
-      "choices":[
-        {"label":"A. Pemasaran agresif","effects":{"penghasilan":15,"keseimbangan":-10},"to":"wira_5"},
-        {"label":"B. Pemasaran konservatif","effects":{"keseimbangan":5},"to":"wira_5"},
-        {"label":"C. Kolaborasi dengan startup lain","effects":{"nilai":10},"to":"wira_5"}
-      ],
-      "random_events":[{"text":"Klien besar membatalkan kontrak (-10 Penghasilan)","p":0.25,"effects":{"penghasilan":-10}}],
-      "char":"wira"
+    {
+      id: "startup_boom",
+      text: "💡 Booming startup Indonesia membuka banyak peluang baru!",
+      probability: 0.12,
+      effects: { minat: 10, penghasilan: 7 },
+      applicablePaths: ["wira", "ind"]
     },
-    "wira_5": {
-      "text":"Startupmu mulai berkembang. Langkah selanjutnya?",
-      "choices":[
-        {"label":"A. Skala bisnis","effects":{"penghasilan":15},"to":"wira_6"},
-        {"label":"B. Jual perusahaan","effects":{"penghasilan":20,"minat":-10},"to":"wira_6"},
-        {"label":"C. Go public (IPO)","effects":{"kepuasan":15},"to":"wira_6"}
-      ],
-      "random_events":[{"text":"Startupmu masuk daftar startup terbaik (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"wira"
+    {
+      id: "pendidikan_digital",
+      text: "📚 Revolusi pendidikan digital meningkatkan kebutuhan guru tech-savvy!",
+      probability: 0.18,
+      effects: { minat: 12, kepuasan: 8 },
+      applicablePaths: ["guru"]
     },
-    "wira_6": {
-      "text":"Setelah 10 tahun, refleksi perjalanan wirausaha.",
-      "choices":[
-        {"label":"A. Lanjutkan sebagai CEO","effects":{"minat":15},"to":"END"},
-        {"label":"B. Mulai startup baru","effects":{"nilai":10},"to":"END"},
-        {"label":"C. Jadi investor untuk startup lain","effects":{"penghasilan":15},"to":"END"}
-      ],
-      "random_events":[{"text":"Keluargamu meminta bantuan finansial (-10 Penghasilan)","p":0.4,"effects":{"penghasilan":-10}}],
-      "char":"wira"
-    },
-
-    /* ======== S2/AKADEMIA ======== */
-    "s2_1": {
-      "text":"Kamu ingin melanjutkan S2. Pilih universitas impianmu.",
-      "choices":[
-        {"label":"A. Universitas dalam negeri","effects":{"keseimbangan":10},"to":"s2_2"},
-        {"label":"B. Universitas luar negeri","effects":{"minat":15,"keseimbangan":-5},"to":"s2_2"},
-        {"label":"C. Program online","effects":{"penghasilan":5},"to":"s2_2"}
-      ],
-      "random_events":[{"text":"Kamu mendapat rekomendasi dari dosen (+5 Minat)","p":0.3,"effects":{"minat":5}}],
-      "char":"s2"
-    },
-    "s2_2": {
-      "text":"Pendanaan studi S2, pilih skema:",
-      "choices":[
-        {"label":"A. Ajukan beasiswa","effects":{"penghasilan":10},"to":"s2_3"},
-        {"label":"B. Ambil pinjaman","effects":{"penghasilan":5,"keseimbangan":-5},"to":"s2_3"},
-        {"label":"C. Kerja paruh waktu","effects":{"keseimbangan":10},"to":"s2_3"}
-      ],
-      "random_events":[{"text":"Kamu gagal mendapat beasiswa (-5 Penghasilan)","p":0.25,"effects":{"penghasilan":-5}}],
-      "char":"s2"
-    },
-    "s2_3": {
-      "text":"Kehidupan akademik dimulai. Fokus tahun pertama?",
-      "choices":[
-        {"label":"A. Fokus pada riset","effects":{"minat":10},"to":"s2_4"},
-        {"label":"B. Ikut kegiatan kampus","effects":{"nilai":10},"to":"s2_4"},
-        {"label":"C. Bangun jaringan profesional","effects":{"penghasilan":5},"to":"s2_4"}
-      ],
-      "random_events":[{"text":"Risetmu diterbitkan di jurnal ternama (+10 Minat)","p":0.3,"effects":{"minat":10}}],
-      "char":"s2"
-    },
-    "s2_4": {
-      "text":"Tesis dan kelulusan: tentukan fokus.",
-      "choices":[
-        {"label":"A. Topik inovatif","effects":{"kepuasan":15},"to":"s2_5"},
-        {"label":"B. Topik praktis","effects":{"penghasilan":10},"to":"s2_5"},
-        {"label":"C. Kolaborasi dengan dosen","effects":{"nilai":10},"to":"s2_5"}
-      ],
-      "random_events":[{"text":"Pembimbingmu sulit dihubungi (-5 Keseimbangan)","p":0.3,"effects":{"keseimbangan":-5}}],
-      "char":"s2"
-    },
-    "s2_5": {
-      "text":"Pasca kelulusan S2, langkah berikut?",
-      "choices":[
-        {"label":"A. Kejar karir akademia","effects":{"nilai":15},"to":"s2_6"},
-        {"label":"B. Masuk industri","effects":{"penghasilan":15},"to":"s2_6"},
-        {"label":"C. Mulai wirausaha","effects":{"minat":10},"to":"s2_6"}
-      ],
-      "random_events":[{"text":"Kamu diundang sebagai dosen tamu (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"s2"
-    },
-    "s2_6": {
-      "text":"Setelah 10 tahun, refleksi perjalanan akademikmu.",
-      "choices":[
-        {"label":"A. Jadi profesor","effects":{"minat":15},"to":"END"},
-        {"label":"B. Pindah ke industri","effects":{"penghasilan":15},"to":"END"},
-        {"label":"C. Tulis buku akademik","effects":{"nilai":10},"to":"END"}
-      ],
-      "random_events":[{"text":"Tekanan keluarga terkait rencana hidup (-5 Keseimbangan)","p":0.35,"effects":{"keseimbangan":-5}}],
-      "char":"s2"
-    },
-
-    /* ======== INDUSTRI ======== */
-    "ind_1": {
-      "text":"Kamu ingin masuk industri. Pilih jenis perusahaan.",
-      "choices":[
-        {"label":"A. Startup teknologi","effects":{"minat":10,"keseimbangan":-5},"to":"ind_2"},
-        {"label":"B. Perusahaan besar","effects":{"penghasilan":15},"to":"ind_2"},
-        {"label":"C. Freelance","effects":{"nilai":10},"to":"ind_2"}
-      ],
-      "random_events":[{"text":"Kamu bertemu koneksi di acara networking (+5 Penghasilan)","p":0.3,"effects":{"penghasilan":5}}],
-      "char":"ind"
-    },
-    "ind_2": {
-      "text":"Proses wawancara: strategi persiapanmu?",
-      "choices":[
-        {"label":"A. Persiapan menyeluruh","effects":{"kepuasan":10},"to":"ind_3"},
-        {"label":"B. Manfaatkan koneksi","effects":{"nilai":10},"to":"ind_3"},
-        {"label":"C. Terima tawaran pertama","effects":{"penghasilan":5},"to":"ind_3"}
-      ],
-      "random_events":[{"text":"Wawancaramu berjalan buruk (-5 Minat)","p":0.25,"effects":{"minat":-5}}],
-      "char":"ind"
-    },
-    "ind_3": {
-      "text":"Karir awal dimulai. Fokus adaptasi?",
-      "choices":[
-        {"label":"A. Seimbangkan kerja dan hidup","effects":{"keseimbangan":10},"to":"ind_4"},
-        {"label":"B. Kembangkan keterampilan","effects":{"minat":10},"to":"ind_4"},
-        {"label":"C. Navigasi politik kantor","effects":{"penghasilan":5},"to":"ind_4"}
-      ],
-      "random_events":[{"text":"Perusahaan diakuisisi (+15 Penghasilan)","p":0.25,"effects":{"penghasilan":15}}],
-      "char":"ind"
-    },
-    "ind_4": {
-      "text":"Karir menengah: pilih langkah strategis.",
-      "choices":[
-        {"label":"A. Spesialisasi di bidangmu","effects":{"penghasilan":15},"to":"ind_5"},
-        {"label":"B. Ganti pekerjaan","effects":{"minat":10},"to":"ind_5"},
-        {"label":"C. Pindah lokasi","effects":{"keseimbangan":10},"to":"ind_5"}
-      ],
-      "random_events":[{"text":"Kamu terlibat konflik dengan atasan (-5 Keseimbangan)","p":0.25,"effects":{"keseimbangan":-5}}],
-      "char":"ind"
-    },
-    "ind_5": {
-      "text":"Karir senior: apa fokusmu?",
-      "choices":[
-        {"label":"A. Jadi mentor","effects":{"nilai":15},"to":"ind_6"},
-        {"label":"B. Kejar peran eksekutif","effects":{"penghasilan":15},"to":"ind_6"},
-        {"label":"C. Rencanakan pensiun dini","effects":{"keseimbangan":10},"to":"ind_6"}
-      ],
-      "random_events":[{"text":"Kamu memenangkan penghargaan industri (+10 Kepuasan)","p":0.3,"effects":{"kepuasan":10}}],
-      "char":"ind"
-    },
-    "ind_6": {
-      "text":"Setelah 10 tahun, refleksi karirmu di industri.",
-      "choices":[
-        {"label":"A. Tetap di industri","effects":{"penghasilan":15},"to":"END"},
-        {"label":"B. Mulai bisnis sendiri","effects":{"minat":10},"to":"END"},
-        {"label":"C. Jadi konsultan","effects":{"nilai":10},"to":"END"}
-      ],
-      "random_events":[{"text":"Kamu menghadapi krisis kesehatan (-5 Keseimbangan)","p":0.35,"effects":{"keseimbangan":-5}}],
-      "char":"ind"
+    {
+      id: "riset_grant",
+      text: "🔬 Pemerintah meluncurkan program grant penelitian IT senilai miliaran!",
+      probability: 0.08,
+      effects: { minat: 15, penghasilan: 10, kepuasan: 12 },
+      applicablePaths: ["s2"]
     }
-  }
-};
-// ...existing code...
-``` 
+  ],
 
+  // Main scenes data
+  scenes: {
+    // Starting scene
+    start: {
+      title: "Memulai Perjalanan",
+      text: "Kamu adalah mahasiswa semester akhir Pendidikan Teknik Informatika. Saatnya memutuskan jalan karirmu setelah lulus nanti. Ada beberapa jalur yang bisa kamu pilih.",
+      choices: [
+        {
+          text: "👨‍🏫 Guru ASN - Jalur pendidik dengan status ASN",
+          subtext: "Stabilitas tinggi, dampak sosial besar",
+          nextScene: "guru_1",
+          effects: {}
+        },
+        {
+          text: "🚀 Wirausaha IT - Membangun startup teknologi sendiri",
+          subtext: "Risiko tinggi, potensi keuntungan besar",
+          nextScene: "wira_1",
+          effects: {}
+        },
+        {
+          text: "🎓 S2/Academia - Melanjutkan studi dan riset",
+          subtext: "Pengembangan intelektual mendalam",
+          nextScene: "s2_1",
+          effects: {}
+        },
+        {
+          text: "💼 Industri - Bekerja di perusahaan teknologi",
+          subtext: "Karir terstruktur, teknologi cutting-edge",
+          nextScene: "ind_1",
+          effects: {}
+        }
+      ]
+    },
+
+    // === GURU ASN PATH ===
+    guru_1: {
+      title: "Memulai Karir Sebagai Guru",
+      text: "Kamu memutuskan untuk menjadi guru. Setelah lulus, kamu mengikuti program PPG dan mendapat kesempatan magang di sekolah negeri. Bagaimana pendekatan mengajarmu?",
+      choices: [
+        {
+          text: "💻 Fokus pada teknologi modern dan coding",
+          subtext: "Meningkatkan minat siswa dengan tech terbaru",
+          nextScene: "guru_2",
+          effects: { minat: 15, nilai: 10, keseimbangan: -5 }
+        },
+        {
+          text: "📚 Menerapkan metode pembelajaran tradisional yang proven",
+          subtext: "Mengutamakan fundamental yang kuat",
+          nextScene: "guru_2",
+          effects: { keseimbangan: 10, kepuasan: 8, minat: -3 }
+        },
+        {
+          text: "🎯 Kombinasi inovatif: teknologi dengan metode klasik",
+          subtext: "Best of both worlds approach",
+          nextScene: "guru_2",
+          effects: { minat: 8, kepuasan: 12, nilai: 8, keseimbangan: 5 }
+        }
+      ]
+    },
+
+    guru_2: {
+      title: "Menghadapi Tantangan Administratif",
+      text: "Sebagai guru ASN, kamu harus menghadapi banyak tugas administratif yang memakan waktu. RPP, laporan, dan berbagai dokumen harus diselesaikan tepat waktu. Bagaimana sikapmu?",
+      choices: [
+        {
+          text: "📝 Menyelesaikan semua tugas admin dengan teliti dan tepat waktu",
+          subtext: "Profesional dan disiplin tinggi",
+          nextScene: "guru_3",
+          effects: { nilai: 15, penghasilan: 10, keseimbangan: -10, kepuasan: -5 }
+        },
+        {
+          text: "⚡ Mencari cara efisien dengan teknologi untuk mempercepat admin",
+          subtext: "Inovasi untuk efisiensi kerja",
+          nextScene: "guru_3",
+          effects: { minat: 12, nilai: 8, keseimbangan: 8, kepuasan: 5 }
+        },
+        {
+          text: "🤝 Berkolaborasi dengan rekan guru untuk saling membantu",
+          subtext: "Teamwork dan networking",
+          nextScene: "guru_3",
+          effects: { kepuasan: 12, keseimbangan: 10, nilai: 5 }
+        }
+      ]
+    },
+
+    guru_3: {
+      title: "Peluang Pengembangan Diri",
+      text: "Setelah beberapa tahun mengajar, kamu melihat berbagai peluang untuk mengembangkan karir. Kepala sekolah menawarkan posisi koordinator IT, ada juga tawaran sertifikasi internasional.",
+      choices: [
+        {
+          text: "📈 Ambil posisi koordinator IT sekolah",
+          subtext: "Tanggung jawab lebih besar, gaji naik",
+          nextScene: "guru_4",
+          effects: { penghasilan: 15, nilai: 12, keseimbangan: -8, kepuasan: 8 }
+        },
+        {
+          text: "🎓 Fokus mengumpulkan sertifikasi internasional",
+          subtext: "Investasi jangka panjang untuk karir",
+          nextScene: "guru_4",
+          effects: { minat: 18, nilai: 15, penghasilan: -5, keseimbangan: -5 }
+        },
+        {
+          text: "👥 Tetap fokus mengajar dan membimbing siswa",
+          subtext: "Passion utama di pendidikan",
+          nextScene: "guru_4",
+          effects: { kepuasan: 20, minat: 10, penghasilan: 5 }
+        }
+      ]
+    },
+
+    guru_4: {
+      title: "Kontribusi untuk Pendidikan",
+      text: "Kamu sudah memiliki pengalaman mengajar yang solid. Kini ada kesempatan untuk berkontribusi lebih luas: menulis buku ajar, membuat platform e-learning, atau menjadi trainer guru lain.",
+      choices: [
+        {
+          text: "📖 Menulis buku ajar teknologi informatika",
+          subtext: "Legacy knowledge untuk generasi mendatang",
+          nextScene: "guru_5",
+          effects: { nilai: 20, kepuasan: 15, minat: 10, penghasilan: 8 }
+        },
+        {
+          text: "💻 Mengembangkan platform e-learning inovatif",
+          subtext: "Teknologi untuk revolusi pendidikan",
+          nextScene: "guru_5",
+          effects: { minat: 25, nilai: 18, keseimbangan: -10, kepuasan: 12 }
+        },
+        {
+          text: "🎯 Menjadi trainer nasional untuk guru IT",
+          subtext: "Multiplier effect ke seluruh Indonesia",
+          nextScene: "guru_5",
+          effects: { kepuasan: 25, nilai: 20, penghasilan: 12, keseimbangan: -5 }
+        }
+      ]
+    },
+
+    guru_5: {
+      title: "Puncak Karir Guru",
+      text: "Reputasimu sebagai guru IT sudah dikenal luas. Ada tawaran menarik: menjadi konsultan kurikulum nasional, kepala sekolah unggulan, atau memulai lembaga pendidikan sendiri.",
+      choices: [
+        {
+          text: "🏛️ Konsultan kurikulum IT nasional untuk Kemendikbud",
+          subtext: "Impact level nasional, prestige tinggi",
+          nextScene: "guru_6",
+          effects: { nilai: 30, kepuasan: 20, penghasilan: 18, minat: 15 }
+        },
+        {
+          text: "🏫 Kepala sekolah unggulan dengan program IT terdepan",
+          subtext: "Leadership dan manajemen pendidikan",
+          nextScene: "guru_6",
+          effects: { penghasilan: 25, nilai: 25, keseimbangan: -15, kepuasan: 15 }
+        },
+        {
+          text: "🚀 Mendirikan lembaga pendidikan teknologi inovatif",
+          subtext: "Entrepreneurship di bidang pendidikan",
+          nextScene: "guru_6",
+          effects: { minat: 30, kepuasan: 25, nilai: 20, keseimbangan: -20, penghasilan: 10 }
+        }
+      ]
+    },
+
+    guru_6: {
+      title: "Legacy Seorang Pendidik",
+      text: "Setelah puluhan tahun berkarir, kamu telah menjadi tokoh berpengaruh di dunia pendidikan IT Indonesia. Ribuan siswa telah kamu didik, banyak guru yang kamu latih, dan sistem pendidikan IT nasional turut kamu bentuk. Apa yang paling membanggakan dari perjalanan ini?",
+      choices: [
+        {
+          text: "👨‍🎓 Melihat murid-muridku sukses di industri tech",
+          subtext: "Kebanggaan melihat hasil didikan",
+          nextScene: "END",
+          effects: { kepuasan: 35, nilai: 25 }
+        },
+        {
+          text: "🌟 Menciptakan standar baru pendidikan IT Indonesia",
+          subtext: "Kontribusi sistemik yang berkelanjutan",
+          nextScene: "END",
+          effects: { nilai: 40, kepuasan: 30, minat: 20 }
+        },
+        {
+          text: "💝 Menginspirasi generasi guru IT yang lebih baik",
+          subtext: "Multiplier effect untuk masa depan",
+          nextScene: "END",
+          effects: { kepuasan: 40, nilai: 30, minat: 15 }
+        }
+      ]
+    },
+
+    // === WIRAUSAHA IT PATH ===
+    wira_1: {
+      title: "Memulai Startup Pertama",
+      text: "Kamu memutuskan untuk terjun ke dunia startup. Setelah lulus, kamu punya ide aplikasi mobile yang menarik. Modalmu terbatas, tapi semangat tinggi. Apa langkah pertamamu?",
+      choices: [
+        {
+          text: "💻 Langsung coding MVP (Minimum Viable Product)",
+          subtext: "Bootstrap dengan skill sendiri",
+          nextScene: "wira_2",
+          effects: { minat: 20, keseimbangan: -10, penghasilan: -5, kepuasan: 10 }
+        },
+        {
+          text: "🎯 Riset pasar mendalam dan validasi ide dulu",
+          subtext: "Approach yang metodis dan hati-hati",
+          nextScene: "wira_2",
+          effects: { nilai: 15, minat: 10, keseimbangan: 5, penghasilan: 3 }
+        },
+        {
+          text: "🤝 Cari co-founder dan tim untuk kolaborasi",
+          subtext: "Strength in numbers approach",
+          nextScene: "wira_2",
+          effects: { kepuasan: 12, nilai: 8, keseimbangan: 8, minat: 5 }
+        }
+      ]
+    },
+
+    wira_2: {
+      title: "Mencari Funding Pertama",
+      text: "Prototype sudah jadi dan ada beberapa user awal yang tertarik. Sekarang kamu butuh dana untuk scaling. Ada beberapa opsi: investor angel, kompetisi startup, atau bootstrapping terus.",
+      choices: [
+        {
+          text: "👼 Pitch ke angel investor untuk seed funding",
+          subtext: "High risk, high reward approach",
+          nextScene: "wira_3",
+          effects: { penghasilan: 15, nilai: 12, minat: 8, keseimbangan: -15 }
+        },
+        {
+          text: "🏆 Ikut kompetisi startup untuk menang hadiah",
+          subtext: "Kompetisi sebagai validasi dan funding",
+          nextScene: "wira_3",
+          effects: { nilai: 18, minat: 15, kepuasan: 10, keseimbangan: -8 }
+        },
+        {
+          text: "💪 Tetap bootstrap sambil cari revenue",
+          subtext: "Maintain control dan grow organically",
+          nextScene: "wira_3",
+          effects: { keseimbangan: 10, kepuasan: 8, penghasilan: 5, nilai: 5 }
+        }
+      ]
+    },
+
+    wira_3: {
+      title: "Scaling Challenge",
+      text: "Startup mu mulai traction! User base tumbuh pesat, tapi dengan itu datang masalah scaling: server crash, customer support kewalahan, dan tim mulai burnout. Bagaimana responsmu?",
+      choices: [
+        {
+          text: "⚡ Hiring spree untuk semua posisi yang dibutuhkan",
+          subtext: "Aggressive scaling dengan tim besar",
+          nextScene: "wira_4",
+          effects: { penghasilan: -10, minat: 15, keseimbangan: 10, kepuasan: 8 }
+        },
+        {
+          text: "🤖 Investasi besar-besaran di automasi dan tech",
+          subtext: "Technology-first solution",
+          nextScene: "wira_4",
+          effects: { minat: 25, nilai: 15, keseimbangan: -5, penghasilan: -5 }
+        },
+        {
+          text: "🎯 Selective growth, fokus quality over quantity",
+          subtext: "Sustainable growth approach",
+          nextScene: "wira_4",
+          effects: { kepuasan: 15, keseimbangan: 15, nilai: 10, minat: 5 }
+        }
+      ]
+    },
+
+    wira_4: {
+      title: "Pivot or Persevere",
+      text: "Setelah 2 tahun, kamu menghadapi dilema klasik startup: growth mulai plateau, kompetitor bermunculan, dan investor mulai bertanya kapan break-even. Ada pressure untuk pivot atau double-down.",
+      choices: [
+        {
+          text: "🔄 Pivot ke vertical market yang lebih profitable",
+          subtext: "Adaptasi strategi berdasarkan learnings",
+          nextScene: "wira_5",
+          effects: { minat: 12, nilai: 8, kepuasan: -5, penghasilan: 12 }
+        },
+        {
+          text: "🚀 All-in double down dengan Series A funding",
+          subtext: "Go big or go home mentality",
+          nextScene: "wira_5",
+          effects: { minat: 20, penghasilan: 20, keseimbangan: -20, nilai: 15 }
+        },
+        {
+          text: "🛡️ Fokus profitability dan sustainable growth",
+          subtext: "Marathon bukan sprint approach",
+          nextScene: "wira_5",
+          effects: { keseimbangan: 20, kepuasan: 15, penghasilan: 15, minat: 5 }
+        }
+      ]
+    },
+
+    wira_5: {
+      title: "Exit Strategy",
+      text: "Startup mu sudah berkembang menjadi scale-up yang solid. Kini ada beberapa opsi menarik: akuisisi dari unicorn Indonesia, IPO preparation, atau terus grow sebagai private company.",
+      choices: [
+        {
+          text: "💰 Jual ke unicorn dengan valuasi menggiurkan",
+          subtext: "Financial exit dan join sebagai VP",
+          nextScene: "wira_6",
+          effects: { penghasilan: 40, kepuasan: 20, nilai: 25, keseimbangan: 15 }
+        },
+        {
+          text: "📈 Preparation untuk IPO di bursa IDX",
+          subtext: "Become public company pioneer",
+          nextScene: "wira_6",
+          effects: { nilai: 35, minat: 25, penghasilan: 30, keseimbangan: -10 }
+        },
+        {
+          text: "🌱 Stay private dan build sustainable empire",
+          subtext: "Long-term vision untuk impact maksimal",
+          nextScene: "wira_6",
+          effects: { kepuasan: 30, minat: 20, nilai: 20, keseimbangan: 10 }
+        }
+      ]
+    },
+
+    wira_6: {
+      title: "Legacy Entrepreneur",
+      text: "Perjalanan entrepreneurship mu telah menginspirasi banyak founder muda Indonesia. Kamu jadi angel investor aktif, mentor di berbagai accelerator, dan speaker di konferensi internasional. Apa next chapter hidupmu?",
+      choices: [
+        {
+          text: "🎓 Mendirikan entrepreneurship academy",
+          subtext: "Educate next generation entrepreneurs",
+          nextScene: "END",
+          effects: { kepuasan: 35, nilai: 30, minat: 25 }
+        },
+        {
+          text: "🌍 Ekspansi global dan build tech empire",
+          subtext: "Put Indonesia on global tech map",
+          nextScene: "END",
+          effects: { nilai: 40, minat: 35, penghasilan: 35 }
+        },
+        {
+          text: "💡 Serial entrepreneur dengan multiple ventures",
+          subtext: "Keep building and innovating",
+          nextScene: "END",
+          effects: { minat: 40, kepuasan: 30, nilai: 25 }
+        }
+      ]
+    },
+
+    // === S2/ACADEMIA PATH ===
+    s2_1: {
+      title: "Memilih Program S2",
+      text: "Kamu memutuskan melanjutkan ke S2. Ada beberapa pilihan menarik: S2 Computer Science di luar negeri dengan beasiswa, program research di universitas top Indonesia, atau joint degree program.",
+      choices: [
+        {
+          text: "✈️ S2 di luar negeri dengan full scholarship",
+          subtext: "Global exposure dan networking internasional",
+          nextScene: "s2_2",
+          effects: { minat: 20, nilai: 18, keseimbangan: -8, penghasilan: -5 }
+        },
+        {
+          text: "🏛️ Research program di universitas top Indonesia",
+          subtext: "Contribute ke ekosistem riset nasional",
+          nextScene: "s2_2",
+          effects: { kepuasan: 15, minat: 15, keseimbangan: 10, nilai: 8 }
+        },
+        {
+          text: "🤝 Joint degree program Indonesia-luar negeri",
+          subtext: "Best of both worlds experience",
+          nextScene: "s2_2",
+          effects: { nilai: 12, minat: 12, kepuasan: 10, keseimbangan: 5 }
+        }
+      ]
+    },
+
+    s2_2: {
+      title: "Choosing Research Focus",
+      text: "Kamu harus memilih fokus riset untuk thesis. Dosenmu memberikan beberapa opsi: AI/Machine Learning yang hot, Cybersecurity yang krusial, atau Human-Computer Interaction yang emerging.",
+      choices: [
+        {
+          text: "🤖 Deep dive ke AI/Machine Learning",
+          subtext: "Cutting-edge tech dengan impact besar",
+          nextScene: "s2_3",
+          effects: { minat: 25, nilai: 15, penghasilan: 10, keseimbangan: -10 }
+        },
+        {
+          text: "🛡️ Spesialisasi di Cybersecurity",
+          subtext: "High demand skill untuk masa depan",
+          nextScene: "s2_3",
+          effects: { penghasilan: 20, nilai: 12, minat: 15, kepuasan: 8 }
+        },
+        {
+          text: "👥 Explore Human-Computer Interaction",
+          subtext: "Interdisciplinary research yang menarik",
+          nextScene: "s2_3",
+          effects: { kepuasan: 18, minat: 12, keseimbangan: 12, nilai: 10 }
+        }
+      ]
+    },
+
+    s2_3: {
+      title: "Publication Journey",
+      text: "Research mu menghasilkan findings menarik! Saatnya publish. Ada pilihan: submit ke top-tier international conference, jurnal nasional terakreditasi, atau kombinasi keduanya.",
+      choices: [
+        {
+          text: "🌍 Target top-tier international conference",
+          subtext: "High impact, global recognition",
+          nextScene: "s2_4",
+          effects: { nilai: 25, minat: 20, keseimbangan: -15, kepuasan: 15 }
+        },
+        {
+          text: "📚 Fokus ke jurnal nasional quality tinggi",
+          subtext: "Contribute ke knowledge base Indonesia",
+          nextScene: "s2_4",
+          effects: { kepuasan: 20, keseimbangan: 10, nilai: 12, minat: 8 }
+        },
+        {
+          text: "📈 Strategic publishing di multiple venues",
+          subtext: "Maximize impact dan visibility",
+          nextScene: "s2_4",
+          effects: { nilai: 18, minat: 15, kepuasan: 12, keseimbangan: -5 }
+        }
+      ]
+    },
+
+    s2_4: {
+      title: "Doctoral Decision",
+      text: "S2 mu berhasil dengan cum laude! Sekarang ada dilema: lanjut S3 untuk jadi researcher sejati, join industry dengan gelar Master, atau jadi lecturer sambil persiapan S3.",
+      choices: [
+        {
+          text: "🎓 Langsung lanjut S3 di universitas prestisius",
+          subtext: "Full commitment to academic career",
+          nextScene: "s2_5",
+          effects: { minat: 30, nilai: 20, penghasilan: -10, keseimbangan: -10 }
+        },
+        {
+          text: "💼 Join industry sebagai Senior Researcher/Scientist",
+          subtext: "Applied research dengan gaji menarik",
+          nextScene: "s2_5",
+          effects: { penghasilan: 25, keseimbangan: 15, kepuasan: 12, minat: 10 }
+        },
+        {
+          text: "👨‍🏫 Jadi lecturer sambil part-time S3",
+          subtext: "Balance between teaching dan research",
+          nextScene: "s2_5",
+          effects: { kepuasan: 20, keseimbangan: 12, nilai: 15, minat: 15 }
+        }
+      ]
+    },
+
+    s2_5: {
+      title: "Research Impact",
+      text: "Research kamu mulai dikenal dan dikutip oleh researcher lain. Ada opportunity untuk: lead research grant besar, collaborate dengan industry giants, atau start research lab sendiri.",
+      choices: [
+        {
+          text: "💰 Lead multi-billion research grant nasional",
+          subtext: "Big budget, big responsibility, big impact",
+          nextScene: "s2_6",
+          effects: { nilai: 30, penghasilan: 20, minat: 25, keseimbangan: -20 }
+        },
+        {
+          text: "🏢 Research collaboration dengan Google/Microsoft",
+          subtext: "Industry partnership untuk real-world impact",
+          nextScene: "s2_6",
+          effects: { penghasilan: 30, nilai: 25, minat: 20, kepuasan: 15 }
+        },
+        {
+          text: "🚀 Establish independent research lab",
+          subtext: "Create your own research ecosystem",
+          nextScene: "s2_6",
+          effects: { minat: 35, kepuasan: 30, nilai: 20, keseimbangan: -15 }
+        }
+      ]
+    },
+
+    s2_6: {
+      title: "Academic Legacy",
+      text: "Kamu telah menjadi salah satu peneliti IT terkemuka Indonesia. Research mu di-cite ribuan kali, mahasiswa S2/S3 mu tersebar di universitas top dunia, dan kamu jadi advisor untuk kebijakan teknologi nasional. Apa crowning achievement mu?",
+      choices: [
+        {
+          text: "🏆 Raih international research award bergengsi",
+          subtext: "Global recognition untuk kontribusi science",
+          nextScene: "END",
+          effects: { nilai: 40, kepuasan: 35, minat: 30 }
+        },
+        {
+          text: "🌱 Mentor generasi peneliti Indonesia yang mendunia",
+          subtext: "Legacy through people development",
+          nextScene: "END",
+          effects: { kepuasan: 40, nilai: 30, minat: 25 }
+        },
+        {
+          text: "🎯 Research mu implementasi jadi solusi nasional",
+          subtext: "From lab to real-world impact",
+          nextScene: "END",
+          effects: { kepuasan: 35, nilai: 35, minat: 25 }
+        }
+      ]
+    },
+
+    // === INDUSTRI PATH ===
+    ind_1: {
+      title: "First Job di Tech Industry",
+      text: "Kamu diterima sebagai Junior Software Engineer di startup fintech yang sedang berkembang. Tim kecil, culture yang dinamis, tapi workload cukup intense. Bagaimana strategimu?",
+      choices: [
+        {
+          text: "💪 Go all-out, kerja extra hard untuk prove yourself",
+          subtext: "Impress management dengan dedikasi tinggi",
+          nextScene: "ind_2",
+          effects: { nilai: 15, penghasilan: 8, keseimbangan: -15, minat: 10 }
+        },
+        {
+          text: "📚 Focus on learning dan skill development",
+          subtext: "Invest in long-term growth",
+          nextScene: "ind_2",
+          effects: { minat: 20, nilai: 12, kepuasan: 10, keseimbangan: 5 }
+        },
+        {
+          text: "🤝 Build relationships dan understand business",
+          subtext: "Network dan business acumen approach",
+          nextScene: "ind_2",
+          effects: { kepuasan: 15, nilai: 10, keseimbangan: 10, minat: 5 }
+        }
+      ]
+    },
+
+    ind_2: {
+      title: "Career Growth Opportunity",
+      text: "Setelah 2 tahun, performance mu excellent! Ada beberapa peluang: promosi ke Senior Engineer, pindah ke tech giant dengan gaji 2x lipat, atau join startup lain sebagai Lead Engineer.",
+      choices: [
+        {
+          text: "📈 Terima promosi Senior Engineer di perusahaan ini",
+          subtext: "Loyalty dan growth trajectory yang jelas",
+          nextScene: "ind_3",
+          effects: { kepuasan: 15, penghasilan: 12, keseimbangan: 8, nilai: 10 }
+        },
+        {
+          text: "🏢 Move ke tech giant untuk exponential salary",
+          subtext: "Financial security dan prestige",
+          nextScene: "ind_3",
+          effects: { penghasilan: 25, nilai: 15, keseimbangan: 5, minat: -5 }
+        },
+        {
+          text: "🚀 Join startup lain sebagai Lead Engineer",
+          subtext: "Bigger responsibility dan equity potential",
+          nextScene: "ind_3",
+          effects: { minat: 20, nilai: 18, penghasilan: 8, keseimbangan: -8 }
+        }
+      ]
+    },
+
+    ind_3: {
+      title: "Technical Leadership",
+      text: "Kamu sekarang lead sebuah tim engineering. Ada pressure untuk deliver product besar dalam timeline ketat. Tim mu mixed: ada senior yang skeptis, junior yang eager, dan satu toxic person.",
+      choices: [
+        {
+          text: "⚡ Focus purely on technical execution dan delivery",
+          subtext: "Results-driven leadership style",
+          nextScene: "ind_4",
+          effects: { minat: 15, penghasilan: 15, keseimbangan: -10, kepuasan: 5 }
+        },
+        {
+          text: "👥 Invest heavily di team building dan culture",
+          subtext: "People-first leadership approach",
+          nextScene: "ind_4",
+          effects: { kepuasan: 20, keseimbangan: 15, nilai: 12, minat: 5 }
+        },
+        {
+          text: "🎯 Balance antara delivery dan people management",
+          subtext: "Holistic leadership dengan strategic thinking",
+          nextScene: "ind_4",
+          effects: { nilai: 18, kepuasan: 15, minat: 10, keseimbangan: 8 }
+        }
+      ]
+    },
+
+    ind_4: {
+      title: "Career Crossroads",
+      text: "Kamu sudah establish sebagai strong technical leader. Sekarang ada fork di jalan: management track (Engineering Manager), technical track (Principal Engineer), atau entrepreneurial (CTO startup).",
+      choices: [
+        {
+          text: "👔 Management track: Engineering Manager",
+          subtext: "Lead people, strategy, dan business impact",
+          nextScene: "ind_5",
+          effects: { penghasilan: 20, nilai: 20, kepuasan: 10, minat: -5, keseimbangan: -10 }
+        },
+        {
+          text: "🔬 Technical track: Principal Engineer",
+          subtext: "Deep technical expertise dan architecture",
+          nextScene: "ind_5",
+          effects: { minat: 25, kepuasan: 18, nilai: 15, keseimbangan: 10 }
+        },
+        {
+          text: "🚀 Entrepreneurial: CTO di startup promising",
+          subtext: "High risk, high reward dengan equity",
+          nextScene: "ind_5",
+          effects: { minat: 30, nilai: 15, penghasilan: -10, keseimbangan: -15, kepuasan: 20 }
+        }
+      ]
+    },
+
+    ind_5: {
+      title: "Industry Impact",
+      text: "Expertise kamu sudah dikenal di industri. Kamu sering jadi speaker di konferensi, consultant untuk product strategy, dan mentor untuk junior engineers. Apa next level contribution mu?",
+      choices: [
+        {
+          text: "📖 Write technical book dan create online courses",
+          subtext: "Share knowledge dengan broader audience",
+          nextScene: "ind_6",
+          effects: { kepuasan: 25, nilai: 20, minat: 15, penghasilan: 10 }
+        },
+        {
+          text: "🏢 Join board of directors di multiple tech companies",
+          subtext: "Strategic advisory role dengan high influence",
+          nextScene: "ind_6",
+          effects: { nilai: 30, penghasilan: 25, kepuasan: 15, keseimbangan: -5 }
+        },
+        {
+          text: "💡 Start tech consultancy firm for enterprises",
+          subtext: "Entrepreneurial venture based on expertise",
+          nextScene: "ind_6",
+          effects: { minat: 25, kepuasan: 20, nilai: 18, penghasilan: 15, keseimbangan: -10 }
+        }
+      ]
+    },
+
+    ind_6: {
+      title: "Tech Industry Veteran",
+      text: "Kamu telah menjadi salah satu tech leader paling respected di Indonesia. Portfolio mu mencakup: successful products yang dipakai jutaan user, teams yang kamu build sekarang jadi leader di companies lain, dan technical decisions yang shape industry standards. What's your ultimate legacy?",
+      choices: [
+        {
+          text: "🌟 Mentor next generation tech leaders Indonesia",
+          subtext: "Pay it forward untuk ekosistem tech nasional",
+          nextScene: "END",
+          effects: { kepuasan: 40, nilai: 30, minat: 20 }
+        },
+        {
+          text: "🏗️ Build technology yang solve major societal problems",
+          subtext: "Tech for good dengan massive impact",
+          nextScene: "END",
+          effects: { kepuasan: 35, nilai: 35, minat: 30 }
+        },
+        {
+          text: "🎯 Establish Indonesia as global tech innovation hub",
+          subtext: "Put Indonesian tech on world map",
+          nextScene: "END",
+          effects: { nilai: 40, minat: 35, kepuasan: 30 }
+        }
+      ]
+    },
+
+    // === END SCENE ===
+    END: {
+      title: "Perjalanan Selesai",
+      text: "Terima kasih telah menyelesaikan perjalanan eksplorasi karir ini! Semoga memberikan insight berharga tentang berbagai jalur karir yang tersedia di bidang IT.",
+      choices: []
+    }
+  },
+
+  // Initial score values
+  initialScores: {
+    minat: 50,
+    keseimbangan: 50,
+    penghasilan: 50,
+    nilai: 50,
+    kepuasan: 50
+  },
+
+  // Career fit calculation weights
+  careerFitWeights: {
+    guru: { minat: 0.25, keseimbangan: 0.25, penghasilan: 0.15, nilai: 0.2, kepuasan: 0.15 },
+    wira: { minat: 0.3, keseimbangan: 0.1, penghasilan: 0.25, nilai: 0.25, kepuasan: 0.1 },
+    s2: { minat: 0.35, keseimbangan: 0.2, penghasilan: 0.1, nilai: 0.25, kepuasan: 0.1 },
+    ind: { minat: 0.2, keseimbangan: 0.2, penghasilan: 0.25, nilai: 0.2, kepuasan: 0.15 }
+  },
+
+  // Fit level descriptions
+  fitLevels: [
+    { min: 80, max: 100, label: "Sangat Cocok", emoji: "😍", color: "#22c55e", description: "Pilihan-pilihanmu menunjukkan kecocokan yang sangat tinggi dengan jalur karir ini. Kamu memiliki passion, mindset, dan prioritas yang align dengan karakteristik jalur ini." },
+    { min: 65, max: 79, label: "Cocok", emoji: "😊", color: "#3b82f6", description: "Ada kecocokan yang baik antara pilihanmu dengan jalur karir ini. Beberapa aspek sangat sesuai, meskipun ada area yang perlu dipertimbangkan lebih lanjut." },
+    { min: 50, max: 64, label: "Perlu Eksplorasi", emoji: "🤔", color: "#f59e0b", description: "Kecocokanmu dengan jalur ini cukup baik, namun masih ada ruang untuk eksplorasi lebih mendalam. Pertimbangkan untuk lebih memahami karakteristik jalur ini." },
+    { min: 0, max: 49, label: "Kurang Cocok", emoji: "😟", color: "#ef4444", description: "Berdasarkan pilihan-pilihanmu, sepertinya jalur ini kurang sesuai dengan preferensi dan prioritasmu. Mungkin ada jalur lain yang lebih cocok." }
+  ]
+};
+
+// Export for use in main app
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = gameData;
+}
