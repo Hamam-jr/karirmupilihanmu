@@ -2211,3 +2211,16 @@ kbd {
     box-shadow: none;
   }
 }
+.fail-alert {
+  background: #ff5555;
+  color: #fff;
+  border-radius: 10px;
+  padding: 25px;
+  font-weight: bold;
+  margin: 20px;
+  text-align: center;
+  font-size: 1.25rem;
+  border: 3px solid #b71c1c;
+  box-shadow: 0 6px 24px rgba(200,0,0,0.13);
+}
+
