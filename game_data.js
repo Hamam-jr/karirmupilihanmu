@@ -101,32 +101,30 @@ const gameData = {
       effects: { minat: 15, penghasilan: 10, kepuasan: 12 },
       applicablePaths: ["s2"]
     },
-    // Di array randomEvents, tambahkan event ekstra negatif di bagian bawah:
-randomEvents.push(
-  {
-    id: "tim_pecah",
-    text: "Tim founder startup bertengkar hebat! Startup diambang perpecahan.",
-    probability: 0.07,
-    effects: { nilai: -25, kepuasan: -20, penghasilan: -25 },
-    applicablePaths: ["wira"]
-  },
-  {
-    id: "burnout_guru",
-    text: "Beban kerja guru tak terkendali. Kamu mengalami burnout.",
-    probability: 0.08,
-    effects: { keseimbangan: -30, kepuasan: -22 },
-    applicablePaths: ["guru"]
-  },
-  {
-    id: "gagal_penelitian",
-    text: "Risetmu ditolak tiga jurnal sekaligus. Frustrasi berat!",
-    probability: 0.05,
-    effects: { nilai: -20, kepuasan: -15, minat: -15 },
-    applicablePaths: ["s2"]
-  },
+    {
+      id: "tim_pecah",
+      text: "Tim founder startup bertengkar hebat! Startup diambang perpecahan.",
+      probability: 0.07,
+      effects: { nilai: -25, kepuasan: -20, penghasilan: -25 },
+      applicablePaths: ["wira"]
+    },
+    {
+      id: "burnout_guru",
+      text: "Beban kerja guru tak terkendali. Kamu mengalami burnout.",
+      probability: 0.08,
+      effects: { keseimbangan: -30, kepuasan: -22 },
+      applicablePaths: ["guru"]
+    },
+    {
+      id: "gagal_penelitian",
+      text: "Risetmu ditolak tiga jurnal sekaligus. Frustrasi berat!",
+      probability: 0.05,
+      effects: { nilai: -20, kepuasan: -15, minat: -15 },
+      applicablePaths: ["s2"]
+    }
   ],
 
-  // Main scenes data
+  // Career paths scenes
   scenes: {
     // Starting scene
     start: {
@@ -156,28 +154,7 @@ randomEvents.push(
           subtext: "Karir terstruktur, teknologi cutting-edge",
           nextScene: "ind_1",
           effects: {}
-        },
-        // --- Tambahkan ke bagian scenes ---
-FAIL_GURU: {
-  title: "Burnout Guru ASN",
-  text: "Beban administrasi dan tekanan membuatmu mengalami burnout berat. Kamu berhenti dari ASN sebelum pensiun. Realita ini sering terjadi tanpa keseimbangan hidup.",
-  choices: []
-},
-FAIL_WIRA: {
-  title: "Startup Bangkrut",
-  text: "Startup-mu gagal total! Kehabisan modal, tim bubar. Startup harus tutup. Wirausaha memang penuh risiko nyata di Indonesia.",
-  choices: []
-},
-FAIL_S2: {
-  title: "Drop Out S2",
-  text: "Stres dan tekanan akademik membuatmu gagal menyelesaikan S2. Kamu perlu evaluasi ulang minat dan motivasi.",
-  choices: []
-},
-FAIL_IND: {
-  title: "PHK mendadak di Industri",
-  text: "Kinerja menurun atau konflik tim membuatmu di-PHK secara mendadak. Karir industri bisa keras tanpa skill & adaptasi.",
-  choices: []
-},
+        }
       ]
     },
 
@@ -332,18 +309,29 @@ FAIL_IND: {
       ]
     },
     guru_7: {
-  title: "Beban Kerja Administrasi Berlebih",
-  text: "Kamu dihadapkan pada tugas administrasi yang menumpuk, jam tambahan, dan tekanan dari atasan.",
-  choices: [
-    {
-      text: "❌ Terima semua tambahan tugas tanpa bicara ke atas",
-      subtext: "Risiko: Burnout berat & kehilangan motivasi mengajar.",
-      nextScene: "FAIL_GURU",
-      effects: { keseimbangan: -35, kepuasan: -20, nilai: -10 }
+      title: "Beban Kerja Administrasi Berlebih",
+      text: "Kamu dihadapkan pada tugas administrasi yang menumpuk, jam tambahan, dan tekanan dari atasan.",
+      choices: [
+        {
+          text: "❌ Terima semua tambahan tugas tanpa bicara ke atas",
+          subtext: "Risiko: Burnout berat & kehilangan motivasi mengajar.",
+          nextScene: "FAIL_GURU",
+          effects: { keseimbangan: -35, kepuasan: -20, nilai: -10 }
+        },
+        {
+          text: "📋 Diskusikan prioritas dan delegasi tugas dengan atasan",
+          subtext: "Manajemen beban kerja yang sehat",
+          nextScene: "guru_6",
+          effects: { keseimbangan: 15, kepuasan: 10, nilai: 5 }
+        },
+        {
+          text: "🤝 Bentuk tim support guru untuk berbagi beban administrasi",
+          subtext: "Kolaborasi untuk efisiensi",
+          nextScene: "guru_6",
+          effects: { kepuasan: 12, keseimbangan: 12, nilai: 8 }
+        }
+      ]
     },
-    // ...opsi lain yang lebih ringan
-  ]
-},
 
 
     // === WIRAUSAHA IT PATH ===
@@ -497,18 +485,29 @@ FAIL_IND: {
       ]
     },
     wira_7: {
-  title: "Krisis Keuangan Startup",
-  text: "Cashflow startup negati,f pengeluaran membengkak, investor mulai ragu.",
-  choices: [
-    {
-      text: "❌ Tutup mata & tambah hutang pribadi untuk bertahan.",
-      subtext: "Risiko: Bangkrut, beban hutang menumpuk.",
-      nextScene: "FAIL_WIRA",
-      effects: { penghasilan: -35, nilai: -15, keseimbangan: -15 }
+      title: "Krisis Keuangan Startup",
+      text: "Cashflow startup negatif, pengeluaran membengkak, investor mulai ragu.",
+      choices: [
+        {
+          text: "❌ Tutup mata & tambah hutang pribadi untuk bertahan",
+          subtext: "Risiko: Bangkrut, beban hutang menumpuk",
+          nextScene: "FAIL_WIRA",
+          effects: { penghasilan: -35, nilai: -15, keseimbangan: -15 }
+        },
+        {
+          text: "📊 Lakukan restrukturisasi dan cost-cutting",
+          subtext: "Pendekatan bisnis yang realistis",
+          nextScene: "wira_6",
+          effects: { nilai: 10, penghasilan: 8, keseimbangan: 5 }
+        },
+        {
+          text: "🤝 Cari strategic partner untuk merger/akuisisi",
+          subtext: "Exit strategy yang terhormat",
+          nextScene: "wira_6",
+          effects: { penghasilan: 12, nilai: 8, kepuasan: 5 }
+        }
+      ]
     },
-    // ...opsi lain
-  ]
-},
 
 
     // === S2/ACADEMIA PATH ===
@@ -662,18 +661,29 @@ FAIL_IND: {
       ]
     },
     s2_7: {
-  title: "Tekanan Akademik & Target Publikasi",
-  text: "Tugas, penelitian, dan target publikasi bertumpuk. Kamu mulai merasa tertekan.",
-  choices: [
-    {
-      text: "❌ Abaikan saran dosen, kerjakan sendiri tanpa konsultasi",
-      subtext: "Risiko: Riset tidak selesai, motivasi menurun.",
-      nextScene: "FAIL_S2",
-      effects: { minat: -20, nilai: -30, kepuasan: -20 }
+      title: "Tekanan Akademik & Target Publikasi",
+      text: "Tugas, penelitian, dan target publikasi bertumpuk. Kamu mulai merasa tertekan.",
+      choices: [
+        {
+          text: "❌ Abaikan saran dosen, kerjakan sendiri tanpa konsultasi",
+          subtext: "Risiko: Riset tidak selesai, motivasi menurun",
+          nextScene: "FAIL_S2",
+          effects: { minat: -20, nilai: -30, kepuasan: -20 }
+        },
+        {
+          text: "🎯 Komunikasi proaktif dengan dosen pembimbing",
+          subtext: "Mencari solusi dan guidance",
+          nextScene: "s2_6",
+          effects: { nilai: 12, minat: 8, kepuasan: 10 }
+        },
+        {
+          text: "📚 Bentuk study group dengan sesama mahasiswa S2",
+          subtext: "Support system untuk motivasi",
+          nextScene: "s2_6",
+          effects: { kepuasan: 15, keseimbangan: 10, minat: 5 }
+        }
+      ]
     },
-    // ...opsi lain yang lebih aman
-  ]
-},
 
 
     // === INDUSTRI PATH ===
@@ -827,19 +837,78 @@ FAIL_IND: {
       ]
     },
     ind_7: {
-  title: "Konflik Tim di Divisi Baru",
-  text: "Kamu ditempatkan di divisi yang penuh tekanan dan terjadi konflik internal.",
-  choices: [
-    {
-      text: "❌ Menghindari konflik, mengerjakan semuanya sendiri tanpa komunikasi.",
-      subtext: "Risiko: Kinerja jatuh, depresi, kemungkinan di-PHK.",
-      nextScene: "FAIL_IND",
-      effects: { keseimbangan: -20, kepuasan: -20, penghasilan: -30 }
+      title: "Konflik Tim di Divisi Baru",
+      text: "Kamu ditempatkan di divisi yang penuh tekanan dan terjadi konflik internal",
+      choices: [
+        {
+          text: "❌ Menghindari konflik, mengerjakan semuanya sendiri tanpa komunikasi",
+          subtext: "Risiko: Kinerja jatuh, depresi, kemungkinan di-PHK",
+          nextScene: "FAIL_IND",
+          effects: { keseimbangan: -20, kepuasan: -20, penghasilan: -30 }
+        },
+        {
+          text: "🤝 Inisiasi diskusi dengan tim dan leader untuk resolve masalah",
+          subtext: "Proaktif mencari solusi bersama",
+          nextScene: "ind_6",
+          effects: { nilai: 15, kepuasan: 10, keseimbangan: 5 }
+        },
+        {
+          text: "📢 Eskalasi ke HR untuk mediasi profesional",
+          subtext: "Menggunakan proper channel untuk conflict resolution",
+          nextScene: "ind_6",
+          effects: { nilai: 10, keseimbangan: 8, kepuasan: 5 }
+        }
+      ]
     },
-    // ...opsi lain yang lebih baik
-  ]
-},
 
+    // === FAIL SCENES ===
+    FAIL_GURU: {
+      title: "Perjalanan Terhenti - Guru ASN",
+      text: "Sayangnya, beberapa aspek penting dalam perjalanan karirmu sebagai Guru ASN mengalami penurunan yang signifikan. Ini menunjukkan bahwa mungkin ada ketidaksesuaian antara jalur ini dengan prioritas atau kemampuanmu saat ini. Pertimbangkan untuk merefleksikan keputusanmu atau mencoba jalur karir lain yang lebih sesuai.",
+      choices: [
+        {
+          text: "🔄 Mulai Ulang Perjalanan",
+          nextScene: "start",
+          effects: {}
+        }
+      ]
+    },
+
+    FAIL_WIRA: {
+      title: "Perjalanan Terhenti - Wirausaha IT",
+      text: "Perjalananmu sebagai Wirausaha IT menghadapi tantangan yang cukup berat, yang menyebabkan penurunan signifikan dalam beberapa aspek penting. Ini mungkin menandakan perlunya evaluasi ulang terhadap kesiapan dan strategi dalam menjalani jalur wirausaha. Pertimbangkan untuk mencoba pendekatan berbeda atau jalur karir alternatif.",
+      choices: [
+        {
+          text: "🔄 Mulai Ulang Perjalanan",
+          nextScene: "start",
+          effects: {}
+        }
+      ]
+    },
+
+    FAIL_S2: {
+      title: "Perjalanan Terhenti - S2/Academia",
+      text: "Jalur akademis yang kamu tempuh mengalami kendala serius yang mempengaruhi berbagai aspek vital dalam perjalanan karirmu. Ini mungkin mengindikasikan bahwa pendekatan atau timing untuk mengejar karir akademis perlu ditinjau ulang. Pertimbangkan untuk mengambil langkah berbeda atau mencoba jalur karir lain.",
+      choices: [
+        {
+          text: "🔄 Mulai Ulang Perjalanan",
+          nextScene: "start",
+          effects: {}
+        }
+      ]
+    },
+
+    FAIL_IND: {
+      title: "Perjalanan Terhenti - Industri",
+      text: "Dalam perjalananmu di industri teknologi, beberapa aspek penting mengalami penurunan yang mengkhawatirkan. Ini bisa menjadi tanda bahwa mungkin ada ketidaksesuaian antara ekspektasi dengan realita di jalur ini. Pertimbangkan untuk mengevaluasi ulang pendekatan atau mencoba jalur karir alternatif.",
+      choices: [
+        {
+          text: "🔄 Mulai Ulang Perjalanan",
+          nextScene: "start",
+          effects: {}
+        }
+      ]
+    },
 
     // === END SCENE ===
     END: {
