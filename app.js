@@ -150,6 +150,21 @@ class CareerExplorationGame {
     }
   }
 
+  checkForHardFail(scores, pathId) {
+    if (
+      scores.penghasilan < 30 ||
+      scores.keseimbangan < 30 ||
+      scores.kepuasan < 30 ||
+      scores.nilai < 30 ||
+      scores.minat < 30
+    ) {
+      this.gameState.currentScene = `FAIL_${pathId.toUpperCase()}`;
+      this.renderScene();
+      return true;
+    }
+    return false;
+  }
+
   applyCareerTheme(pathId) {
     const path = gameData.careerPaths[pathId];
     if (!path) return;
@@ -252,6 +267,13 @@ class CareerExplorationGame {
     // Update scene content
     document.getElementById('sceneTitle').textContent = scene.title;
     document.getElementById('sceneText').innerHTML = `<p>${scene.text}</p>`;
+
+    // Check if current scene is a fail scene and show/hide fail alert
+    if (this.gameState.currentScene.startsWith('FAIL_')) {
+      document.getElementById('failAlert').style.display = 'block';
+    } else {
+      document.getElementById('failAlert').style.display = 'none';
+    }
 
     // Show/hide character portrait based on scene
     const portraitEl = document.getElementById('characterPortrait');
@@ -375,6 +397,13 @@ class CareerExplorationGame {
           this.gameState.scores[dimension] + value
         ));
       });
+
+      // Check for hard fail condition after updating scores
+      const pathId = this.gameState.currentPath;
+      if (this.checkForHardFail(this.gameState.scores, pathId)) {
+        this.isTransitioning = false;
+        return;
+      }
     }
 
     // Set career path if starting
