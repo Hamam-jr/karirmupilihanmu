@@ -484,7 +484,7 @@ class CareerExplorationGame {
     const progressText = document.getElementById('progressText');
     const steps = document.querySelectorAll('.progress-step');
     
-    progressText.textContent = `Scene ${this.gameState.sceneNumber} of 6`;
+    progressText.textContent = `Scene ${this.gameState.sceneNumber} of 10`;
     
     steps.forEach((step, index) => {
       step.classList.remove('active', 'completed');
