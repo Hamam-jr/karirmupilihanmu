@@ -158,7 +158,8 @@ class CareerExplorationGame {
       scores.nilai < 30 ||
       scores.minat < 30
     ) {
-      this.gameState.currentScene = `FAIL_${pathId.toUpperCase()}`;
+      // Format: guru_fail, wira_fail, s2_fail, ind_fail (lowercase with underscore)
+      this.gameState.currentScene = `${pathId}_fail`;
       this.renderScene();
       return true;
     }
@@ -249,14 +250,14 @@ class CareerExplorationGame {
       return;
     }
 
-    // Handle end scene
-    if (sceneId === 'END') {
+    // Handle end scene (both 'END' and 'end' formats)
+    if (sceneId === 'END' || sceneId === 'end') {
       this.showEndScreen();
       return;
     }
 
     // Update progress for path scenes
-    if (sceneId !== 'start' && sceneId !== 'END') {
+    if (sceneId !== 'start' && sceneId !== 'END' && sceneId !== 'end') {
       this.updateProgress();
     }
 
@@ -269,7 +270,8 @@ class CareerExplorationGame {
     document.getElementById('sceneText').innerHTML = `<p>${scene.text}</p>`;
 
     // Check if current scene is a fail scene and show/hide fail alert
-    if (this.gameState.currentScene.startsWith('FAIL_')) {
+    // Fail scenes: guru_fail, wira_fail, s2_fail, ind_fail (lowercase format)
+    if (this.gameState.currentScene.endsWith('_fail') || this.gameState.currentScene.startsWith('FAIL_')) {
       document.getElementById('failAlert').style.display = 'block';
     } else {
       document.getElementById('failAlert').style.display = 'none';
@@ -434,8 +436,13 @@ class CareerExplorationGame {
 
     // Move to next scene after animation
     setTimeout(() => {
-      this.gameState.currentScene = choice.nextScene;
-      this.renderScene();
+      // If nextScene is null (end choice), show end screen directly
+      if (choice.nextScene === null) {
+        this.showEndScreen();
+      } else {
+        this.gameState.currentScene = choice.nextScene;
+        this.renderScene();
+      }
       this.isTransitioning = false;
     }, 600);
   }
