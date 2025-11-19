@@ -151,12 +151,17 @@ class CareerExplorationGame {
   }
 
   checkForHardFail(scores, pathId) {
+    // Fail threshold: 35 (professional balance between challenge and fairness)
+    // Starting point: 50 for all dimensions
+    // Allows player up to 15 points drop on any dimension before failing
+    const FAIL_THRESHOLD = 20;
+    
     if (
-      scores.penghasilan < 30 ||
-      scores.keseimbangan < 30 ||
-      scores.kepuasan < 30 ||
-      scores.nilai < 30 ||
-      scores.minat < 30
+      scores.penghasilan < FAIL_THRESHOLD ||
+      scores.keseimbangan < FAIL_THRESHOLD ||
+      scores.kepuasan < FAIL_THRESHOLD ||
+      scores.nilai < FAIL_THRESHOLD ||
+      scores.minat < FAIL_THRESHOLD
     ) {
       // Format: guru_fail, wira_fail, s2_fail, ind_fail (lowercase with underscore)
       this.gameState.currentScene = `${pathId}_fail`;
