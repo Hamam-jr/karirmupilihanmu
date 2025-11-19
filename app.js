@@ -586,23 +586,47 @@ class CareerExplorationGame {
   calculateAndDisplayCareerFit() {
     if (!this.gameState.currentPath) return;
 
-    const pathWeights = gameData.careerFitWeights[this.gameState.currentPath];
-    let totalFit = 0;
+    // Calculate average score across all dimensions
+    const scores = this.gameState.scores;
+    let totalScore = 0;
+    let dimensionCount = 0;
     
-    Object.entries(pathWeights).forEach(([dimension, weight]) => {
-      totalFit += (this.gameState.scores[dimension] * weight);
+    Object.entries(scores).forEach(([dimension, value]) => {
+      totalScore += value;
+      dimensionCount++;
     });
+    
+    const fitPercentage = Math.round(totalScore / dimensionCount);
 
-    const fitPercentage = Math.round(totalFit);
-    const fitLevel = gameData.fitLevels.find(level => 
-      fitPercentage >= level.min && fitPercentage <= level.max
-    );
+    // Find appropriate fit level
+    let fitLevel = null;
+    if (gameData.fitLevels.excellent && typeof gameData.fitLevels.excellent === 'object') {
+      // New format: fitLevels as object with excellent, good, moderate, low
+      if (fitPercentage >= gameData.fitLevels.excellent.threshold) {
+        fitLevel = { ...gameData.fitLevels.excellent, emoji: '😍' };
+      } else if (fitPercentage >= gameData.fitLevels.good.threshold) {
+        fitLevel = { ...gameData.fitLevels.good, emoji: '😊' };
+      } else if (fitPercentage >= gameData.fitLevels.moderate.threshold) {
+        fitLevel = { ...gameData.fitLevels.moderate, emoji: '🤔' };
+      } else {
+        fitLevel = { ...gameData.fitLevels.low, emoji: '😟' };
+      }
+    } else if (Array.isArray(gameData.fitLevels)) {
+      // Old format: fitLevels as array
+      fitLevel = gameData.fitLevels.find(level => 
+        fitPercentage >= level.min && fitPercentage <= level.max
+      );
+    }
+
+    if (!fitLevel) {
+      fitLevel = { label: 'Hasil', emoji: '🎯', message: 'Perjalanan karirmu selesai!' };
+    }
 
     // Update fit display
     document.getElementById('fitPercentage').textContent = `${fitPercentage}%`;
-    document.getElementById('fitEmoji').textContent = fitLevel.emoji;
-    document.getElementById('fitLabel').textContent = fitLevel.label;
-    document.getElementById('fitExplanation').textContent = fitLevel.description;
+    document.getElementById('fitEmoji').textContent = fitLevel.emoji || '🎯';
+    document.getElementById('fitLabel').textContent = fitLevel.label || 'Hasil';
+    document.getElementById('fitExplanation').textContent = fitLevel.message || fitLevel.description || 'Terima kasih telah bermain!';
     
     // Update CSS custom property for circle animation
     document.documentElement.style.setProperty('--fit-percentage', fitPercentage);
