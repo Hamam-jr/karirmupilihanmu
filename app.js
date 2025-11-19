@@ -359,9 +359,11 @@ class CareerExplorationGame {
     Object.entries(effects).forEach(([dimension, value]) => {
       if (value !== 0) {
         const sign = value > 0 ? '+' : '';
-        const dimensionData = gameData.scoreDimensions[dimension];
+        // Try scoreDimensions first (for game_data.js), then scores (for game_data22.js)
+        const dimensionData = gameData.scoreDimensions?.[dimension] || gameData.scores?.[dimension];
         if (dimensionData) {
-          effectTexts.push(`${dimensionData.icon} ${sign}${value}`);
+          const icon = dimensionData.icon || '📊';
+          effectTexts.push(`${icon} ${sign}${value}`);
         }
       }
     });
