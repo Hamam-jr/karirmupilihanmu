@@ -629,15 +629,18 @@ class CareerExplorationGame {
     finalScores.innerHTML = '';
     
     Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
-      const dimensionData = gameData.scoreDimensions[dimension];
+      // Try scoreDimensions first (for game_data.js), then scores (for game_data22.js)
+      const dimensionData = gameData.scoreDimensions?.[dimension] || gameData.scores?.[dimension];
       if (!dimensionData) return;
       
       const scoreBar = document.createElement('div');
       scoreBar.className = 'score-bar';
+      const icon = dimensionData.icon || '📊';
+      const label = dimensionData.label || dimension;
       scoreBar.innerHTML = `
         <div class="score-bar-label">
-          <span class="score-icon">${dimensionData.icon}</span>
-          <span>${dimensionData.label}</span>
+          <span class="score-icon">${icon}</span>
+          <span>${label}</span>
         </div>
         <div class="score-bar-track">
           <div class="score-bar-fill" style="width: ${value}%"></div>
