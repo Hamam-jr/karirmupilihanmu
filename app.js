@@ -1,11 +1,9 @@
-// ============================================================================
 // Enhanced IT Career Exploration Game - Main Application
-// Version 7.0 - WITH WORKING SAVE/LOAD SYSTEM
-// ============================================================================
+// Version 6.0 - Modern UI/UX with 2025 Design Trends
 
 class CareerExplorationGame {
   constructor() {
-    // Game state - NOW WITH PROPER LOCALSTORAGE SUPPORT
+    // Game state - using in-memory storage (no localStorage in sandbox)
     this.gameState = {
       currentScene: 'start',
       currentPath: null,
@@ -34,798 +32,738 @@ class CareerExplorationGame {
   }
 
   init() {
-    console.log('🎮 Initializing Career Exploration Game v7.0');
+    console.log('🎮 Initializing Career Exploration Game v6.0');
     
+    // Check if onboarding was completed before
+    // Since we can't use localStorage, show onboarding every time
     this.setupEventListeners();
     this.setupKeyboardNavigation();
     this.initializeTheme();
     
-    // Check for saved game FIRST before showing onboarding
-    if (this.hasSavedGame()) {
-      this.showLoadGamePrompt();
+    // Show onboarding for first-time users
+    if (!this.settings.onboardingDone) {
+      this.showOnboarding();
     } else {
-      // Show onboarding for first-time users
-      if (!this.settings.onboardingDone) {
-        this.showOnboarding();
-      } else {
-        this.hideOnboarding();
-      }
-      
-      // Initialize first scene
-      this.renderScene();
+      this.hideOnboarding();
     }
+
+    // Initialize first scene
+    this.renderScene();
   }
 
-  // ============================================================================
-  // SAVE/LOAD GAME SYSTEM - FULLY WORKING VERSION
-  // ============================================================================
+  setupEventListeners() {
+    // Header controls
+    document.getElementById('musicBtn').addEventListener('click', () => this.toggleMusic());
+    document.getElementById('restartBtn').addEventListener('click', () => this.restartGame());
+    document.getElementById('helpBtn').addEventListener('click', () => this.showHelp());
+    document.getElementById('saveBtn').addEventListener('click', () => this.saveGame());
 
-  saveGame() {
-    try {
-      // Prepare game state for saving
-      const saveData = {
-        version: "7.0",
-        timestamp: new Date().toISOString(),
-        gameState: {
-          currentScene: this.gameState.currentScene,
-          currentPath: this.gameState.currentPath,
-          sceneNumber: this.gameState.sceneNumber,
-          scores: { ...this.gameState.scores },
-          choices: [...this.gameState.choices],
-          randomEvents: [...this.gameState.randomEvents],
-          gameStarted: this.gameState.gameStarted,
-          onboardingCompleted: this.gameState.onboardingCompleted
-        },
-        settings: { ...this.settings }
-      };
+    // Onboarding
+    document.getElementById('skipOnboarding').addEventListener('click', () => this.skipOnboarding());
+    document.getElementById('nextSlide').addEventListener('click', () => this.nextSlide());
+    document.getElementById('prevSlide').addEventListener('click', () => this.prevSlide());
 
-      // Save to localStorage
-      localStorage.setItem('careerGameSave', JSON.stringify(saveData));
-      
-      // Show success message
-      this.showTempMessage("✅ Progress tersimpan!");
-      console.log("✅ Game saved successfully:", saveData);
-      
-      return true;
-    } catch (error) {
-      console.error("❌ Save failed:", error);
-      this.showTempMessage("❌ Gagal menyimpan! Coba lagi.");
-      return false;
-    }
-  }
+    // Dialogs
+    document.getElementById('closeHelp').addEventListener('click', () => this.hideHelp());
+    document.getElementById('closeSummary').addEventListener('click', () => this.hideSummary());
 
-  loadGame() {
-    try {
-      // Check if save exists
-      const savedData = localStorage.getItem('careerGameSave');
-      
-      if (!savedData) {
-        this.showTempMessage("⚠️ Tidak ada progress tersimpan.");
-        return false;
+    // End screen buttons
+    document.getElementById('playAgainBtn').addEventListener('click', () => this.restartGame());
+    document.getElementById('viewSummaryBtn').addEventListener('click', () => this.showSummary());
+
+    // Summary tabs
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+    });
+
+    // Random event dismiss
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('random-event-dismiss')) {
+        this.hideRandomEvent();
       }
+    });
 
-      // Parse saved data
-      const saveData = JSON.parse(savedData);
-      
-      // Validate save data
-      if (!saveData.gameState || !saveData.gameState.currentScene) {
-        throw new Error("Invalid save data");
-      }
-
-      // Restore game state
-      this.gameState = {
-        currentScene: saveData.gameState.currentScene,
-        currentPath: saveData.gameState.currentPath,
-        sceneNumber: saveData.gameState.sceneNumber,
-        scores: { ...saveData.gameState.scores },
-        choices: [...saveData.gameState.choices],
-        randomEvents: [...saveData.gameState.randomEvents],
-        gameStarted: saveData.gameState.gameStarted,
-        onboardingCompleted: saveData.gameState.onboardingCompleted || false
-      };
-
-      // Restore settings if available
-      if (saveData.settings) {
-        this.settings = { ...saveData.settings };
-      }
-
-      // Apply theme for current path
-      if (this.gameState.currentPath) {
-        this.applyCareerTheme(this.gameState.currentPath);
-      }
-
-      // Render current scene
-      this.renderScene();
-      
-      // Show success message
-      const date = new Date(saveData.timestamp);
-      const dateStr = date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+    // Dialog overlay clicks
+    document.querySelectorAll('.dialog-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.style.display = 'none';
+        }
       });
-      this.showTempMessage(`✅ Progress dimuat! (${dateStr})`);
-      console.log("✅ Game loaded successfully:", saveData);
+    });
+
+    // Onboarding overlay clicks
+    document.getElementById('onboardingOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.skipOnboarding();
+      }
+    });
+  }
+
+  setupKeyboardNavigation() {
+    document.addEventListener('keydown', (e) => {
+      // Don't handle keys if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      const choices = document.querySelectorAll('.choice-card:not([style*="display: none"])');
       
-      return true;
-    } catch (error) {
-      console.error("❌ Load failed:", error);
-      this.showTempMessage("❌ Gagal memuat progress! File rusak.");
-      return false;
-    }
-  }
-
-  autoSave() {
-    // Auto-save silently without showing message
-    try {
-      const saveData = {
-        version: "7.0",
-        timestamp: new Date().toISOString(),
-        gameState: { ...this.gameState },
-        settings: { ...this.settings }
-      };
-      
-      localStorage.setItem('careerGameAutoSave', JSON.stringify(saveData));
-      console.log("💾 Auto-saved at scene:", this.gameState.currentScene);
-      return true;
-    } catch (error) {
-      console.error("Auto-save failed:", error);
-      return false;
-    }
-  }
-
-  hasSavedGame() {
-    try {
-      const savedData = localStorage.getItem('careerGameSave');
-      return savedData !== null && savedData !== '';
-    } catch (error) {
-      console.error("Error checking saved game:", error);
-      return false;
-    }
-  }
-
-  deleteSave() {
-    try {
-      localStorage.removeItem('careerGameSave');
-      localStorage.removeItem('careerGameAutoSave');
-      this.showTempMessage("🗑️ Progress dihapus.");
-      console.log("Save data deleted");
-      return true;
-    } catch (error) {
-      console.error("Delete save failed:", error);
-      return false;
-    }
-  }
-
-  showLoadGamePrompt() {
-    try {
-      const savedData = JSON.parse(localStorage.getItem('careerGameSave'));
-      
-      if (!savedData) return;
-
-      const date = new Date(savedData.timestamp);
-      const dateStr = date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      // Create load game prompt overlay
-      const overlayHTML = `
-        <div id="loadGameOverlay" class="dialog-overlay" style="display: flex; z-index: 10000;">
-          <div class="dialog-content" style="max-width: 500px;">
-            <div class="dialog-header">
-              <h2>🔄 Progress Tersimpan Ditemukan</h2>
-            </div>
-            <div class="dialog-body">
-              <div style="background: var(--glass-bg); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                  <div style="font-size: 3rem;">${this.getPathIcon(savedData.gameState.currentPath)}</div>
-                  <div>
-                    <div style="font-weight: 600; font-size: 1.1rem;">
-                      ${this.getPathLabel(savedData.gameState.currentPath)}
-                    </div>
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                      Scene ${savedData.gameState.sceneNumber} dari ~10
-                    </div>
-                  </div>
-                </div>
-                <div style="color: var(--text-secondary); font-size: 0.85rem;">
-                  📅 Terakhir dimainkan: ${dateStr}
-                </div>
-              </div>
-              <div style="display: flex; gap: 1rem;">
-                <button id="loadGameBtn" class="btn-primary" style="flex: 1;">
-                  📂 Lanjutkan Progress
-                </button>
-                <button id="newGameBtn" class="btn-secondary" style="flex: 1;">
-                  🎮 Mulai Baru
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // Inject overlay to body
-      document.body.insertAdjacentHTML('beforeend', overlayHTML);
-
-      // Add event listeners
-      document.getElementById('loadGameBtn').addEventListener('click', () => {
-        this.loadGame();
-        document.getElementById('loadGameOverlay').remove();
-        this.hideOnboarding(); // Skip onboarding when loading
-      });
-
-      document.getElementById('newGameBtn').addEventListener('click', () => {
-        const confirmed = confirm('⚠️ Yakin mulai permainan baru?\n\nProgress yang tersimpan akan DIHAPUS PERMANEN.');
-        if (confirmed) {
-          this.deleteSave();
-          document.getElementById('loadGameOverlay').remove();
-          
-          // Show onboarding for new game
-          if (!this.settings.onboardingDone) {
-            this.showOnboarding();
+      switch(e.key) {
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+          const choiceIndex = parseInt(e.key) - 1;
+          if (choices[choiceIndex]) {
+            this.selectChoice(choiceIndex);
           }
-          
-          // Reset and render start scene
-          this.renderScene();
-        }
-      });
+          break;
+        case 'Enter':
+          if (choices.length > 0) {
+            this.selectChoice(0); // Select first choice
+          }
+          break;
+        case 'r':
+        case 'R':
+          if (e.ctrlKey || e.metaKey) return; // Don't interfere with refresh
+          this.restartGame();
+          break;
+        case 'h':
+        case 'H':
+          this.showHelp();
+          break;
+        case 'Escape':
+          // Close any open dialogs
+          document.querySelectorAll('.dialog-overlay').forEach(overlay => {
+            if (overlay.style.display !== 'none') {
+              overlay.style.display = 'none';
+            }
+          });
+          break;
+      }
+    });
+  }
 
-      // Close on overlay click
-      document.getElementById('loadGameOverlay').addEventListener('click', (e) => {
-        if (e.target.id === 'loadGameOverlay') {
-          document.getElementById('loadGameOverlay').remove();
-          this.renderScene();
-        }
-      });
+  initializeTheme() {
+    // Apply current career path theme if any
+    if (this.gameState.currentPath) {
+      this.applyCareerTheme(this.gameState.currentPath);
+    }
+  }
 
-    } catch (error) {
-      console.error("Error showing load prompt:", error);
-      // If error, just start normally
+  checkForHardFail(scores, pathId) {
+    // Fail threshold: 35 (professional balance between challenge and fairness)
+    // Starting point: 50 for all dimensions
+    // Allows player up to 15 points drop on any dimension before failing
+    const FAIL_THRESHOLD = 20;
+    
+    if (
+      scores.penghasilan < FAIL_THRESHOLD ||
+      scores.keseimbangan < FAIL_THRESHOLD ||
+      scores.kepuasan < FAIL_THRESHOLD ||
+      scores.nilai < FAIL_THRESHOLD ||
+      scores.minat < FAIL_THRESHOLD
+    ) {
+      // Format: guru_fail, wira_fail, s2_fail, ind_fail (lowercase with underscore)
+      this.gameState.currentScene = `${pathId}_fail`;
       this.renderScene();
+      return true;
+    }
+    return false;
+  }
+
+  applyCareerTheme(pathId) {
+    const path = gameData.careerPaths[pathId];
+    if (!path) return;
+
+    const root = document.documentElement;
+    root.style.setProperty('--current-career-primary', path.colorPrimary);
+    root.style.setProperty('--current-career-accent', path.colorAccent);
+    
+    // Update header gradient
+    const header = document.querySelector('.header');
+    header.style.background = `linear-gradient(135deg, ${path.colorPrimary}15 0%, ${path.colorAccent}10 100%)`;
+    
+    // Update progress steps color
+    document.documentElement.style.setProperty('--progress-color', path.colorPrimary);
+    
+    // Update character name
+    const characterNameEl = document.getElementById('characterName');
+    if (characterNameEl) {
+      characterNameEl.textContent = path.characterName;
     }
   }
 
-  getPathIcon(pathId) {
-    const icons = {
-      'guru': '👨‍🏫',
-      'wira': '🚀',
-      's2': '🎓',
-      'ind': '💼'
-    };
-    return icons[pathId] || '🎮';
+  // ONBOARDING SYSTEM
+  showOnboarding() {
+    document.getElementById('onboardingOverlay').style.display = 'flex';
+    this.currentSlide = 0;
+    this.updateOnboardingSlide();
   }
 
-  getPathLabel(pathId) {
-    const labels = {
-      'guru': 'Guru ASN',
-      'wira': 'Wirausaha IT',
-      's2': 'S2/Akademisi',
-      'ind': 'Industri'
-    };
-    return labels[pathId] || 'Belum Memilih Jalur';
+  hideOnboarding() {
+    document.getElementById('onboardingOverlay').style.display = 'none';
+    this.settings.onboardingDone = true;
   }
 
-  getPathColor(pathId) {
-    const colors = {
-      'guru': '#22c55e',
-      'wira': '#f97316',
-      's2': '#3b82f6',
-      'ind': '#8b5cf6'
-    };
-    return colors[pathId] || '#6366f1';
+  skipOnboarding() {
+    this.hideOnboarding();
   }
 
-  exportSave() {
-    try {
-      const saveData = localStorage.getItem('careerGameSave');
-      if (!saveData) {
-        this.showTempMessage("⚠️ Tidak ada progress untuk diexport.");
-        return;
-      }
-
-      // Create blob and download
-      const blob = new Blob([saveData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `career_game_save_${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      this.showTempMessage("📥 Save file berhasil didownload!");
-    } catch (error) {
-      console.error("Export failed:", error);
-      this.showTempMessage("❌ Gagal export save file.");
+  nextSlide() {
+    const totalSlides = document.querySelectorAll('.onboarding-slide').length;
+    if (this.currentSlide < totalSlides - 1) {
+      this.currentSlide++;
+      this.updateOnboardingSlide();
+    } else {
+      this.hideOnboarding();
     }
   }
 
-  importSave(fileInput) {
-    const file = fileInput.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const saveData = JSON.parse(e.target.result);
-        
-        // Validate
-        if (!saveData.gameState || !saveData.version) {
-          throw new Error("Invalid save file");
-        }
-
-        // Save to localStorage
-        localStorage.setItem('careerGameSave', e.target.result);
-        
-        // Load the game
-        this.loadGame();
-        this.showTempMessage("✅ Save file berhasil diimport!");
-      } catch (error) {
-        console.error("Import failed:", error);
-        this.showTempMessage("❌ File save tidak valid!");
-      }
-    };
-    reader.readAsText(file);
+  prevSlide() {
+    if (this.currentSlide > 0) {
+      this.currentSlide--;
+      this.updateOnboardingSlide();
+    }
   }
-  // ============================================================================
-  // CORE GAME FUNCTIONS
-  // ============================================================================
 
+  updateOnboardingSlide() {
+    const slides = document.querySelectorAll('.onboarding-slide');
+    const indicators = document.querySelectorAll('.indicator');
+    const nextBtn = document.getElementById('nextSlide');
+    const prevBtn = document.getElementById('prevSlide');
+
+    // Hide all slides
+    slides.forEach(slide => slide.style.display = 'none');
+    indicators.forEach(indicator => indicator.classList.remove('active'));
+
+    // Show current slide
+    slides[this.currentSlide].style.display = 'block';
+    indicators[this.currentSlide].classList.add('active');
+
+    // Update navigation buttons
+    prevBtn.disabled = this.currentSlide === 0;
+    nextBtn.textContent = this.currentSlide === slides.length - 1 ? 'Mulai' : 'Selanjutnya';
+  }
+
+  // SCENE MANAGEMENT
   renderScene() {
     const sceneId = this.gameState.currentScene;
     const scene = gameData.scenes[sceneId];
-
+    
     if (!scene) {
       console.error('Scene not found:', sceneId);
       return;
     }
 
-    // Update scene number counter
-    if (sceneId !== 'start' && sceneId !== 'end' && !sceneId.includes('fail')) {
-      this.gameState.sceneNumber++;
-    }
-
-    // Get elements
-    const container = document.getElementById('gameContainer');
-    const sceneTitle = document.getElementById('sceneTitle');
-    const sceneText = document.getElementById('sceneText');
-    const choicesContainer = document.getElementById('choicesContainer');
-    const sceneCounter = document.getElementById('sceneCounter');
-
-    // Update scene counter
-    if (sceneCounter) {
-      if (this.gameState.currentPath && sceneId !== 'start' && sceneId !== 'end') {
-        sceneCounter.textContent = `Scene ${this.gameState.sceneNumber}`;
-        sceneCounter.style.display = 'block';
-      } else {
-        sceneCounter.style.display = 'none';
-      }
-    }
-
-    // Set title and text with fade animation
-    if (sceneTitle && sceneText) {
-      sceneTitle.style.opacity = '0';
-      sceneText.style.opacity = '0';
-
-      setTimeout(() => {
-        sceneTitle.textContent = scene.title;
-        sceneText.textContent = scene.text;
-        sceneTitle.style.opacity = '1';
-        sceneText.style.opacity = '1';
-      }, 100);
-    }
-
-    // Clear and render choices
-    if (choicesContainer) {
-      choicesContainer.innerHTML = '';
-      choicesContainer.setAttribute('data-count', scene.choices.length);
-      
-      scene.choices.forEach((choice, index) => {
-        const choiceBtn = document.createElement('button');
-        choiceBtn.className = 'choice-card';
-        
-        // Generate effect icons/emoji based on effects
-        let icon = '→';
-        if (choice.effects) {
-          const values = Object.values(choice.effects);
-          const avg = values.reduce((a, b) => a + b, 0) / values.length;
-          if (avg > 5) icon = '📈'; // Very positive
-          else if (avg > 0) icon = '👍'; // Slightly positive
-          else if (avg < -5) icon = '📉'; // Very negative
-          else if (avg < 0) icon = '⚠️'; // Slightly negative
-        }
-        
-        let effectsHtml = '';
-        if (choice.effects) {
-          const effectsList = Object.entries(choice.effects)
-            .filter(([_, val]) => val !== 0)
-            .map(([dim, val]) => {
-              const dimensionData = gameData.scores[dim];
-              const sign = val > 0 ? '+' : '';
-              const color = val > 0 ? '#22c55e' : '#ef4444';
-              return `<span style="color: ${color}; font-weight: 700;">${dimensionData.icon}${sign}${val}</span>`;
-            })
-            .join(' ');
-          effectsHtml = `<div class="choice-effects" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">${effectsList}</div>`;
-        }
-        
-        choiceBtn.innerHTML = `
-          <div class="choice-icon">${icon}</div>
-          <div class="choice-content">
-            <h3>${choice.text}</h3>
-            ${choice.subtext ? `<p>${choice.subtext}</p>` : ''}
-          </div>
-          ${effectsHtml}
-        `;
-        
-        choiceBtn.addEventListener('click', () => this.selectChoice(index));
-        
-        // Stagger animation
-        choiceBtn.style.opacity = '0';
-        choiceBtn.style.transform = 'translateY(20px)';
-        setTimeout(() => {
-          choiceBtn.style.transition = 'all 0.3s ease';
-          choiceBtn.style.opacity = '1';
-          choiceBtn.style.transform = 'translateY(0)';
-        }, 200 + (index * 100));
-        
-        choicesContainer.appendChild(choiceBtn);
-      });
-    }
-
-    // Show game container
-    if (container) {
-      container.style.display = 'block';
-    }
-
-    // Update scores display
-    this.updateScoreDisplay();
-
-    // Auto-save after rendering scene (except start)
-    if (this.gameState.gameStarted && sceneId !== 'start') {
-      setTimeout(() => {
-        this.autoSave();
-      }, 500);
-    }
-
-    // Scroll to top smoothly
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  selectChoice(choiceIndex) {
-    const sceneId = this.gameState.currentScene;
-    const scene = gameData.scenes[sceneId];
-    
-    if (!scene || !scene.choices[choiceIndex]) {
-      console.error('Invalid choice');
+    // Handle end scene (both 'END' and 'end' formats)
+    if (sceneId === 'END' || sceneId === 'end') {
+      this.showEndScreen();
       return;
     }
 
-    const choice = scene.choices[choiceIndex];
-
-    // Mark game as started
-    if (!this.gameState.gameStarted) {
-      this.gameState.gameStarted = true;
+    // Update progress for path scenes
+    if (sceneId !== 'start' && sceneId !== 'END' && sceneId !== 'end') {
+      this.updateProgress();
     }
 
-    // Record choice
-    this.gameState.choices.push({
-      scene: sceneId,
-      choiceIndex: choiceIndex,
-      choiceText: choice.text,
-      timestamp: new Date().toISOString()
-    });
+    // Show scene elements
+    document.getElementById('sceneCard').style.display = 'block';
+    document.getElementById('endScreen').style.display = 'none';
 
-    // Apply score effects
-    if (choice.effects) {
-      Object.entries(choice.effects).forEach(([dimension, value]) => {
-        if (this.gameState.scores[dimension] !== undefined) {
-          this.gameState.scores[dimension] += value;
-          
-          // Clamp scores between 0 and 100
-          this.gameState.scores[dimension] = Math.max(0, Math.min(100, this.gameState.scores[dimension]));
-        }
-      });
+    // Update scene content
+    document.getElementById('sceneTitle').textContent = scene.title;
+    document.getElementById('sceneText').innerHTML = `<p>${scene.text}</p>`;
+
+    // Check if current scene is a fail scene and show/hide fail alert
+    // Fail scenes: guru_fail, wira_fail, s2_fail, ind_fail (lowercase format)
+    if (this.gameState.currentScene.endsWith('_fail') || this.gameState.currentScene.startsWith('FAIL_')) {
+      document.getElementById('failAlert').style.display = 'block';
+    } else {
+      document.getElementById('failAlert').style.display = 'none';
     }
 
-    // Set career path if starting from start scene
+    // Show/hide character portrait based on scene
+    const portraitEl = document.getElementById('characterPortrait');
     if (sceneId === 'start') {
-      const pathMap = {
-        'guru_1': 'guru',
-        'wira_1': 'wira',
-        's2_1': 's2',
-        'ind_1': 'ind'
-      };
-      
-      const nextSceneId = choice.nextScene;
-      if (pathMap[nextSceneId]) {
-        this.gameState.currentPath = pathMap[nextSceneId];
-        this.applyCareerTheme(this.gameState.currentPath);
-      }
+      portraitEl.style.display = 'none';
+      document.getElementById('scoreboard').style.display = 'none';
+      document.getElementById('progressContainer').style.display = 'none';
+    } else {
+      portraitEl.style.display = 'flex';
+      document.getElementById('scoreboard').style.display = 'flex';
+      document.getElementById('progressContainer').style.display = 'block';
     }
 
-    // Show score changes animation
-    this.showScoreChanges(choice.effects);
+    // Render choices
+    this.renderChoices(scene.choices);
 
-    // Check for random event (30% chance)
-    const shouldTriggerEvent = Math.random() < 0.3;
-    if (shouldTriggerEvent && this.gameState.currentPath) {
-      const randomEvent = gameData.getRandomEvent(this.gameState.currentPath);
-      
-      if (randomEvent) {
-        this.showRandomEvent(randomEvent, () => {
-          // After random event, move to next scene
-          this.moveToNextScene(choice.nextScene);
-        });
-        return;
-      }
-    }
+    // Update scoreboard
+    this.updateScoreboard();
 
-    // Check for fail condition (if any score below 35)
-    const failScore = Object.entries(this.gameState.scores).find(([_, value]) => value < 35);
-    
-    if (failScore && this.gameState.currentPath) {
-      const failSceneId = `${this.gameState.currentPath}_fail`;
-      if (gameData.scenes[failSceneId]) {
-        setTimeout(() => {
-          this.gameState.currentScene = failSceneId;
-          this.renderScene();
-        }, 1000);
-        return;
-      }
-    }
+    // Check for random events
+    this.checkRandomEvent();
 
-    // Move to next scene normally
-    setTimeout(() => {
-      this.moveToNextScene(choice.nextScene);
-    }, 800);
+    // Add scene transition animation
+    this.animateSceneTransition();
   }
 
-  moveToNextScene(nextSceneId) {
-    if (!nextSceneId) {
-      // End of game
-      this.showResults();
-      return;
-    }
+  renderChoices(choices) {
+    const container = document.getElementById('choicesContainer');
+    container.innerHTML = '';
+    container.setAttribute('data-count', choices.length);
 
-    this.gameState.currentScene = nextSceneId;
-    this.renderScene();
-
-    // Auto-save after moving to next scene
-    setTimeout(() => {
-      this.autoSave();
-    }, 1000);
+    choices.forEach((choice, index) => {
+      const choiceEl = this.createChoiceElement(choice, index);
+      container.appendChild(choiceEl);
+    });
   }
 
-  showResults() {
-    const avgScore = gameData.calculateAverageScore(this.gameState.scores);
-    const fitLevel = gameData.getFitLevel(avgScore);
-    const recommendation = gameData.generateRecommendation(
-      this.gameState.scores, 
-      this.gameState.currentPath
-    );
-
-    // Get elements
-    const container = document.getElementById('gameContainer');
-    const resultsContainer = document.getElementById('resultsContainer');
+  createChoiceElement(choice, index) {
+    const div = document.createElement('div');
+    div.className = 'choice-card';
+    div.setAttribute('data-choice-index', index);
+    div.setAttribute('tabindex', '0');
     
-    if (!resultsContainer) {
-      console.error('Results container not found');
-      return;
+    // Add career path specific class for start scene
+    if (this.gameState.currentScene === 'start') {
+      div.classList.add('career-path');
+      const pathId = choice.nextScene.split('_')[0];
+      div.setAttribute('data-path', pathId);
     }
 
-    // Hide game container
-    if (container) {
-      container.style.display = 'none';
-    }
+    // Extract icon from choice text or use default
+    const iconMatch = choice.text.match(/^([\u{1F000}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}])/u);
+    const icon = iconMatch ? iconMatch[1] : '🎯';
+    const textWithoutIcon = choice.text.replace(/^([\u{1F000}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}])\s*/u, '');
 
-    // Build results HTML
-    resultsContainer.innerHTML = `
-      <div class="results-content" style="animation: fadeIn 0.5s ease;">
-        <div class="results-header">
-          <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">🎉 Perjalanan Selesai!</h1>
-          <p style="color: var(--text-secondary); font-size: 1.1rem;">
-            Berikut adalah analisis kesesuaian karir berdasarkan pilihan-pilihanmu
-          </p>
-        </div>
-
-        <!-- Career Path Result -->
-        <div class="result-card" style="background: linear-gradient(135deg, ${this.getPathColor(this.gameState.currentPath)}33, ${this.getPathColor(this.gameState.currentPath)}11); border: 2px solid ${this.getPathColor(this.gameState.currentPath)};">
-          <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
-            <div style="font-size: 4rem;">${this.getPathIcon(this.gameState.currentPath)}</div>
-            <div style="flex: 1;">
-              <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">${recommendation.careerPath}</h2>
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="fit-badge" style="background: ${fitLevel.color}; color: white; padding: 0.5rem 1rem; border-radius: 2rem; font-weight: 600;">
-                  ${recommendation.fitLevel}
-                </div>
-                <div style="font-size: 1.5rem; font-weight: 700; color: ${fitLevel.color};">
-                  ${avgScore}%
-                </div>
-              </div>
-            </div>
-          </div>
-          <p style="font-size: 1.1rem; line-height: 1.6; color: var(--text-primary);">
-            ${recommendation.advice}
-          </p>
-        </div>
-
-        <!-- Detailed Scores -->
-        <div class="result-card">
-          <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">📊 Skor Detail per Dimensi</h3>
-          <div class="scores-grid">
-            ${Object.entries(this.gameState.scores).map(([dimension, score]) => {
-              const dimensionData = gameData.scores[dimension];
-              const percentage = score;
-              const color = this.getScoreColor(score);
-              
-              return `
-                <div class="score-item">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="font-weight: 600;">${dimensionData.icon} ${dimensionData.label}</span>
-                    <span style="font-weight: 700; color: ${color};">${score}%</span>
-                  </div>
-                  <div class="score-bar">
-                    <div class="score-bar-fill" style="width: ${percentage}%; background: ${color};"></div>
-                  </div>
-                  <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                    ${dimensionData.description}
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- Strengths and Improvements -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-          ${recommendation.strengths.length > 0 ? `
-            <div class="result-card" style="background: linear-gradient(135deg, #22c55e22, #22c55e11); border: 1px solid #22c55e44;">
-              <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #22c55e;">✅ Kekuatan Kamu</h3>
-              <ul style="list-style: none; padding: 0;">
-                ${recommendation.strengths.map(s => `
-                  <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--glass-border);">
-                    <strong>${s.dimension}</strong>: ${s.score}%
-                  </li>
-                `).join('')}
-              </ul>
-            </div>
-          ` : ''}
-          
-          ${recommendation.improvements.length > 0 ? `
-            <div class="result-card" style="background: linear-gradient(135deg, #f59e0b22, #f59e0b11); border: 1px solid #f59e0b44;">
-              <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #f59e0b;">⚠️ Area untuk Dikembangkan</h3>
-              <ul style="list-style: none; padding: 0;">
-                ${recommendation.improvements.map(i => `
-                  <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--glass-border);">
-                    <strong>${i.dimension}</strong>: ${i.score}%
-                  </li>
-                `).join('')}
-              </ul>
-            </div>
-          ` : ''}
-        </div>
-
-        <!-- Journey Stats -->
-        <div class="result-card">
-          <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">📈 Statistik Perjalanan</h3>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem;">
-            <div style="text-align: center;">
-              <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-primary);">${this.gameState.sceneNumber}</div>
-              <div style="color: var(--text-secondary); margin-top: 0.5rem;">Total Scene</div>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-primary);">${this.gameState.choices.length}</div>
-              <div style="color: var(--text-secondary); margin-top: 0.5rem;">Keputusan Dibuat</div>
-            </div>
-            <div style="text-align: center;">
-              <div style="font-size: 2.5rem; font-weight: 700; color: var(--accent-primary);">${this.gameState.randomEvents.length}</div>
-              <div style="color: var(--text-secondary); margin-top: 0.5rem;">Random Events</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 2rem;">
-          <button id="playAgainBtn" class="btn-primary">
-            🔄 Main Lagi
-          </button>
-          <button id="exportResultsBtn" class="btn-secondary">
-            📥 Export Hasil
-          </button>
-          <button id="saveResultsBtn" class="btn-secondary">
-            💾 Simpan Progress
-          </button>
-        </div>
+    div.innerHTML = `
+      <div class="choice-icon">${icon}</div>
+      <div class="choice-content">
+        <h3>${textWithoutIcon}</h3>
+        ${choice.subtext ? `<small>${choice.subtext}</small>` : ''}
+        ${this.getChoiceEffectsText(choice.effects)}
       </div>
     `;
 
-    // Show results container
-    resultsContainer.style.display = 'block';
+    // Add click handler
+    div.addEventListener('click', () => this.selectChoice(index));
 
-    // Add event listeners
-    document.getElementById('playAgainBtn')?.addEventListener('click', () => {
-      if (confirm('Mulai permainan baru? Progress saat ini akan disimpan ke riwayat.')) {
-        this.restartGame();
+    // Add keyboard focus handler
+    div.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.selectChoice(index);
       }
     });
 
-    document.getElementById('exportResultsBtn')?.addEventListener('click', () => {
-      this.exportResults(recommendation);
-    });
-
-    document.getElementById('saveResultsBtn')?.addEventListener('click', () => {
-      this.saveGame();
-    });
-
-    // Auto-save final results
-    setTimeout(() => {
-      this.saveGame();
-    }, 1000);
-
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return div;
   }
 
-  getScoreColor(score) {
-    if (score >= 80) return '#22c55e';
-    if (score >= 65) return '#3b82f6';
-    if (score >= 50) return '#f59e0b';
-    return '#ef4444';
-  }
-
-  getPathColor(pathId) {
-    const colors = {
-      'guru': '#22c55e',
-      'wira': '#f97316',
-      's2': '#3b82f6',
-      'ind': '#8b5cf6'
-    };
-    return colors[pathId] || '#6b7280';
-  }
-
-  exportResults(recommendation) {
-    const resultsData = {
-      version: "7.0",
-      timestamp: new Date().toISOString(),
-      careerPath: recommendation.careerPath,
-      averageScore: recommendation.averageScore,
-      fitLevel: recommendation.fitLevel,
-      scores: this.gameState.scores,
-      choices: this.gameState.choices,
-      stats: {
-        totalScenes: this.gameState.sceneNumber,
-        totalChoices: this.gameState.choices.length,
-        randomEvents: this.gameState.randomEvents.length
-      },
-      advice: recommendation.advice
-    };
-
-    const blob = new Blob([JSON.stringify(resultsData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `career_results_${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    this.showTempMessage("📥 Hasil berhasil diexport!");
-  }
-
-  restartGame() {
-    // Delete current save
-    this.deleteSave();
+  getChoiceEffectsText(effects) {
+    if (!effects || Object.keys(effects).length === 0) return '';
     
+    const effectTexts = [];
+    Object.entries(effects).forEach(([dimension, value]) => {
+      if (value !== 0) {
+        const sign = value > 0 ? '+' : '';
+        // Try scoreDimensions first (for game_data.js), then scores (for game_data22.js)
+        const dimensionData = gameData.scoreDimensions?.[dimension] || gameData.scores?.[dimension];
+        if (dimensionData) {
+          const icon = dimensionData.icon || '📊';
+          effectTexts.push(`${icon} ${sign}${value}`);
+        }
+      }
+    });
+    
+    if (effectTexts.length > 0) {
+      return `<div class="choice-effects">Efek: ${effectTexts.join(', ')}</div>`;
+    }
+    return '';
+  }
+
+  selectChoice(choiceIndex) {
+    if (this.isTransitioning) return;
+
+    const scene = gameData.scenes[this.gameState.currentScene];
+    const choice = scene.choices[choiceIndex];
+    
+    if (!choice) return;
+
+    this.isTransitioning = true;
+
+    // Record choice
+    this.gameState.choices.push({
+      scene: this.gameState.currentScene,
+      choiceIndex: choiceIndex,
+      choiceText: choice.text,
+      effects: choice.effects
+    });
+
+    // Apply choice effects to scores
+    if (choice.effects) {
+      Object.entries(choice.effects).forEach(([dimension, value]) => {
+        this.gameState.scores[dimension] = Math.max(0, Math.min(100, 
+          this.gameState.scores[dimension] + value
+        ));
+      });
+
+      // Check for hard fail condition after updating scores
+      const pathId = this.gameState.currentPath;
+      if (this.checkForHardFail(this.gameState.scores, pathId)) {
+        this.isTransitioning = false;
+        return;
+      }
+    }
+
+    // Set career path if starting
+    if (this.gameState.currentScene === 'start') {
+      this.gameState.currentPath = choice.nextScene.split('_')[0];
+      this.gameState.gameStarted = true;
+      this.gameState.sceneNumber = 1;
+      this.applyCareerTheme(this.gameState.currentPath);
+    } else if (this.gameState.currentScene.includes('_')) {
+      this.gameState.sceneNumber++;
+    }
+
+    // Add button click animation
+    const choiceElements = document.querySelectorAll('.choice-card');
+    if (choiceElements[choiceIndex]) {
+      choiceElements[choiceIndex].style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        if (choiceElements[choiceIndex]) {
+          choiceElements[choiceIndex].style.transform = '';
+        }
+      }, 150);
+    }
+
+    // Animate score changes
+    this.animateScoreChanges(choice.effects);
+
+    // Move to next scene after animation
+    setTimeout(() => {
+      // If nextScene is null (end choice), show end screen directly
+      if (choice.nextScene === null) {
+        this.showEndScreen();
+      } else {
+        this.gameState.currentScene = choice.nextScene;
+        this.renderScene();
+      }
+      this.isTransitioning = false;
+    }, 600);
+  }
+
+  // SCORING SYSTEM
+  updateScoreboard() {
+    Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
+      const element = document.getElementById(`score${dimension.charAt(0).toUpperCase() + dimension.slice(1)}`);
+      if (element) {
+        element.textContent = Math.round(value);
+        
+        // Update score level styling
+        const scoreItem = element.closest('.score-item');
+        if (scoreItem) {
+          scoreItem.removeAttribute('data-level');
+          if (value >= 70) {
+            scoreItem.setAttribute('data-level', 'high');
+          } else if (value >= 40) {
+            scoreItem.setAttribute('data-level', 'medium');
+          } else {
+            scoreItem.setAttribute('data-level', 'low');
+          }
+        }
+      }
+    });
+  }
+
+  animateScoreChanges(effects) {
+    if (!effects) return;
+
+    Object.entries(effects).forEach(([dimension, value]) => {
+      if (value !== 0) {
+        const element = document.getElementById(`score${dimension.charAt(0).toUpperCase() + dimension.slice(1)}`);
+        if (element) {
+          element.classList.add('updating');
+          setTimeout(() => {
+            element.classList.remove('updating');
+          }, 500);
+        }
+      }
+    });
+  }
+
+  // PROGRESS SYSTEM
+  updateProgress() {
+    if (!this.gameState.currentPath) return;
+
+    const progressText = document.getElementById('progressText');
+    const steps = document.querySelectorAll('.progress-step');
+    
+    progressText.textContent = `Scene ${this.gameState.sceneNumber} of 10`;
+    
+    steps.forEach((step, index) => {
+      step.classList.remove('active', 'completed');
+      if (index < this.gameState.sceneNumber - 1) {
+        step.classList.add('completed');
+      } else if (index === this.gameState.sceneNumber - 1) {
+        step.classList.add('active');
+      }
+    });
+  }
+
+  // RANDOM EVENTS SYSTEM
+  checkRandomEvent() {
+    // Skip random events on start scene or if one is already showing
+    if (this.gameState.currentScene === 'start' || 
+        document.getElementById('randomEvent').style.display !== 'none') {
+      return;
+    }
+
+    // Check each random event for trigger
+    gameData.randomEvents.forEach(event => {
+      if (Math.random() < event.probability) {
+        // Check if event applies to current path
+        if (event.applicablePaths.includes('all') || 
+            event.applicablePaths.includes(this.gameState.currentPath)) {
+          this.showRandomEvent(event);
+        }
+      }
+    });
+  }
+
+  showRandomEvent(event) {
+    const randomEventEl = document.getElementById('randomEvent');
+    const textEl = randomEventEl.querySelector('.random-event-text');
+    
+    textEl.textContent = event.text;
+    randomEventEl.style.display = 'block';
+    
+    // Apply event effects
+    if (event.effects) {
+      Object.entries(event.effects).forEach(([dimension, value]) => {
+        this.gameState.scores[dimension] = Math.max(0, Math.min(100, 
+          this.gameState.scores[dimension] + value
+        ));
+      });
+      this.animateScoreChanges(event.effects);
+      this.updateScoreboard();
+    }
+    
+    // Record random event
+    this.gameState.randomEvents.push({
+      scene: this.gameState.currentScene,
+      event: event,
+      timestamp: Date.now()
+    });
+    
+    // Auto-dismiss after 4 seconds
+    if (this.randomEventTimeout) {
+      clearTimeout(this.randomEventTimeout);
+    }
+    this.randomEventTimeout = setTimeout(() => {
+      this.hideRandomEvent();
+    }, 4000);
+  }
+
+  hideRandomEvent() {
+    document.getElementById('randomEvent').style.display = 'none';
+    if (this.randomEventTimeout) {
+      clearTimeout(this.randomEventTimeout);
+      this.randomEventTimeout = null;
+    }
+  }
+
+  // ANIMATION SYSTEM
+  animateSceneTransition() {
+    if (!this.settings.animationsEnabled) return;
+
+    const sceneCard = document.getElementById('sceneCard');
+    sceneCard.classList.add('transitioning');
+    
+    setTimeout(() => {
+      sceneCard.classList.remove('transitioning');
+    }, 100);
+  }
+
+  // END SCREEN
+  showEndScreen() {
+    document.getElementById('sceneCard').style.display = 'none';
+    document.getElementById('endScreen').style.display = 'block';
+    document.getElementById('progressContainer').style.display = 'none';
+    
+    this.calculateAndDisplayCareerFit();
+    this.renderJourneySummary();
+    this.renderFinalScores();
+  }
+
+  calculateAndDisplayCareerFit() {
+    if (!this.gameState.currentPath) return;
+
+    // Calculate average score across all dimensions
+    const scores = this.gameState.scores;
+    let totalScore = 0;
+    let dimensionCount = 0;
+    
+    Object.entries(scores).forEach(([dimension, value]) => {
+      totalScore += value;
+      dimensionCount++;
+    });
+    
+    const fitPercentage = Math.round(totalScore / dimensionCount);
+
+    // Find appropriate fit level
+    let fitLevel = null;
+    if (gameData.fitLevels.excellent && typeof gameData.fitLevels.excellent === 'object') {
+      // New format: fitLevels as object with excellent, good, moderate, low
+      if (fitPercentage >= gameData.fitLevels.excellent.threshold) {
+        fitLevel = { ...gameData.fitLevels.excellent, emoji: '😍' };
+      } else if (fitPercentage >= gameData.fitLevels.good.threshold) {
+        fitLevel = { ...gameData.fitLevels.good, emoji: '😊' };
+      } else if (fitPercentage >= gameData.fitLevels.moderate.threshold) {
+        fitLevel = { ...gameData.fitLevels.moderate, emoji: '🤔' };
+      } else {
+        fitLevel = { ...gameData.fitLevels.low, emoji: '😟' };
+      }
+    } else if (Array.isArray(gameData.fitLevels)) {
+      // Old format: fitLevels as array
+      fitLevel = gameData.fitLevels.find(level => 
+        fitPercentage >= level.min && fitPercentage <= level.max
+      );
+    }
+
+    if (!fitLevel) {
+      fitLevel = { label: 'Hasil', emoji: '🎯', message: 'Perjalanan karirmu selesai!' };
+    }
+
+    // Update fit display
+    document.getElementById('fitPercentage').textContent = `${fitPercentage}%`;
+    document.getElementById('fitEmoji').textContent = fitLevel.emoji || '🎯';
+    document.getElementById('fitLabel').textContent = fitLevel.label || 'Hasil';
+    document.getElementById('fitExplanation').textContent = fitLevel.message || fitLevel.description || 'Terima kasih telah bermain!';
+    
+    // Update CSS custom property for circle animation
+    document.documentElement.style.setProperty('--fit-percentage', fitPercentage);
+  }
+
+  renderJourneySummary() {
+    const journeyPath = document.getElementById('journeyPath');
+    journeyPath.innerHTML = '';
+    
+    // Create journey nodes based on choices
+    this.gameState.choices.forEach((choice, index) => {
+      if (choice.scene !== 'start') {
+        const node = document.createElement('div');
+        node.className = 'journey-node';
+        node.textContent = index;
+        node.title = choice.choiceText;
+        journeyPath.appendChild(node);
+      }
+    });
+  }
+
+  renderFinalScores() {
+    const finalScores = document.getElementById('finalScores');
+    finalScores.innerHTML = '';
+    
+    Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
+      // Try scoreDimensions first (for game_data.js), then scores (for game_data22.js)
+      const dimensionData = gameData.scoreDimensions?.[dimension] || gameData.scores?.[dimension];
+      if (!dimensionData) return;
+      
+      const scoreBar = document.createElement('div');
+      scoreBar.className = 'score-bar';
+      const icon = dimensionData.icon || '📊';
+      const label = dimensionData.label || dimension;
+      scoreBar.innerHTML = `
+        <div class="score-bar-label">
+          <span class="score-icon">${icon}</span>
+          <span>${label}</span>
+        </div>
+        <div class="score-bar-track">
+          <div class="score-bar-fill" style="width: ${value}%"></div>
+        </div>
+        <div class="score-bar-value">${Math.round(value)}</div>
+      `;
+      
+      finalScores.appendChild(scoreBar);
+      
+      // Animate bar fill
+      setTimeout(() => {
+        const fill = scoreBar.querySelector('.score-bar-fill');
+        fill.style.width = '0%';
+        setTimeout(() => {
+          fill.style.width = `${value}%`;
+        }, 100);
+      }, 100);
+    });
+  }
+
+  // DIALOG MANAGEMENT
+  showHelp() {
+    document.getElementById('helpDialog').style.display = 'flex';
+  }
+
+  hideHelp() {
+    document.getElementById('helpDialog').style.display = 'none';
+  }
+
+  showSummary() {
+    document.getElementById('summaryDialog').style.display = 'flex';
+    this.renderSummaryContent();
+  }
+
+  hideSummary() {
+    document.getElementById('summaryDialog').style.display = 'none';
+  }
+
+  switchTab(tabId) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+      content.style.display = 'none';
+    });
+    document.getElementById(`${tabId}Tab`).style.display = 'block';
+  }
+
+  renderSummaryContent() {
+    // Journey tab content
+    const journeyContent = document.getElementById('summaryJourneyContent');
+    if (this.gameState.currentPath) {
+      const pathData = gameData.careerPaths[this.gameState.currentPath];
+      journeyContent.innerHTML = `
+        <div class="journey-summary-card">
+          <h4>${pathData.icon} ${pathData.label}</h4>
+          <p>${pathData.description}</p>
+          <p><strong>Total Scenes Completed:</strong> ${this.gameState.choices.length}</p>
+        </div>
+      `;
+    }
+    
+    // Scores tab content - reuse final scores rendering
+    const scoresContent = document.getElementById('summaryScoresContent');
+    scoresContent.innerHTML = '<div class="score-bars" id="summaryScoreBars"></div>';
+    
+    // Decisions tab content
+    const decisionsContent = document.getElementById('summaryDecisionsContent');
+    let decisionsHTML = '<div class="decisions-list">';
+    this.gameState.choices.forEach((choice, index) => {
+      decisionsHTML += `
+        <div class="decision-item">
+          <h5>Scene ${index + 1}: ${choice.scene}</h5>
+          <p>${choice.choiceText}</p>
+        </div>
+      `;
+    });
+    decisionsHTML += '</div>';
+    decisionsContent.innerHTML = decisionsHTML;
+  }
+
+  // GAME CONTROLS
+  restartGame() {
     // Reset game state
     this.gameState = {
       currentScene: 'start',
@@ -835,513 +773,93 @@ class CareerExplorationGame {
       choices: [],
       randomEvents: [],
       gameStarted: false,
-      onboardingCompleted: true
+      onboardingCompleted: this.settings.onboardingDone
     };
-
-    // Hide results
-    const resultsContainer = document.getElementById('resultsContainer');
-    if (resultsContainer) {
-      resultsContainer.style.display = 'none';
+    
+    // Reset UI
+    document.getElementById('endScreen').style.display = 'none';
+    document.getElementById('progressContainer').style.display = 'none';
+    document.getElementById('randomEvent').style.display = 'none';
+    
+    // Clear any active timeouts
+    if (this.randomEventTimeout) {
+      clearTimeout(this.randomEventTimeout);
+      this.randomEventTimeout = null;
     }
-
+    
     // Reset theme
-    document.documentElement.style.setProperty('--accent-primary', '#6366f1');
-    document.documentElement.style.setProperty('--accent-secondary', '#818cf8');
-
+    const header = document.querySelector('.header');
+    header.style.background = '';
+    
     // Render start scene
     this.renderScene();
     
-    this.showTempMessage("🎮 Game direset! Mulai perjalanan baru.");
-  }
-  // ============================================================================
-  // UI HELPER FUNCTIONS
-  // ============================================================================
-
-  updateScoreDisplay() {
-    const scoreboard = document.getElementById('scoreboard');
-    if (!scoreboard) return;
-
-    // Update individual score values
-    Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
-      const scoreElement = document.getElementById(`score${dimension.charAt(0).toUpperCase()}${dimension.slice(1)}`);
-      if (scoreElement) {
-        scoreElement.textContent = Math.round(value);
-      }
-    });
-
-    // Show scoreboard after first choice
-    if (this.gameState.gameStarted && scoreboard.style.display === 'none') {
-      scoreboard.style.display = 'flex';
-    }
-  }
-
-  showScoreChanges(effects) {
-    if (!effects || Object.keys(effects).length === 0) return;
-
-    const changesHTML = Object.entries(effects)
-      .filter(([_, value]) => value !== 0)
-      .map(([dimension, value]) => {
-        const dimensionData = gameData.scores[dimension];
-        const sign = value > 0 ? '+' : '';
-        const color = value > 0 ? '#22c55e' : '#ef4444';
-        
-        return `
-          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: ${value > 0 ? '#22c55e22' : '#ef444422'}; border-radius: 0.5rem;">
-            <span>${dimensionData.icon}</span>
-            <span style="flex: 1;">${dimensionData.label}</span>
-            <span style="font-weight: 700; color: ${color};">${sign}${value}</span>
-          </div>
-        `;
-      }).join('');
-
-    const popup = document.createElement('div');
-    popup.className = 'score-changes-popup';
-    popup.innerHTML = `
-      <div style="background: var(--glass-bg); backdrop-filter: blur(20px); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--glass-border); max-width: 300px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
-        <div style="font-weight: 600; margin-bottom: 1rem; font-size: 1.1rem;">📊 Perubahan Skor</div>
-        ${changesHTML}
-      </div>
-    `;
-    
-    document.body.appendChild(popup);
-
-    setTimeout(() => {
-      popup.style.opacity = '0';
-      popup.style.transform = 'translateY(-20px)';
-      setTimeout(() => popup.remove(), 300);
-    }, 2500);
-  }
-
-  showRandomEvent(event, callback) {
-    this.gameState.randomEvents.push({
-      id: event.id,
-      title: event.title,
-      timestamp: new Date().toISOString()
-    });
-
-    const eventHTML = `
-      <div id="randomEventOverlay" class="dialog-overlay" style="display: flex;">
-        <div class="dialog-content" style="max-width: 500px;">
-          <div class="dialog-header" style="background: ${event.type === 'positive' ? 'linear-gradient(135deg, #22c55e, #16a34a)' : event.type === 'negative' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #3b82f6, #2563eb)'};">
-            <h2 style="color: white;">⚡ Event Acak!</h2>
-          </div>
-          <div class="dialog-body">
-            <div style="text-align: center; font-size: 3rem; margin: 1rem 0;">
-              ${event.type === 'positive' ? '🎉' : event.type === 'negative' ? '⚠️' : '📢'}
-            </div>
-            <h3 style="font-size: 1.5rem; margin-bottom: 1rem; text-align: center;">
-              ${event.title}
-            </h3>
-            <p style="font-size: 1.1rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 1.5rem;">
-              ${event.text}
-            </p>
-            
-            ${Object.keys(event.effects).length > 0 ? `
-              <div style="background: var(--glass-bg); padding: 1rem; border-radius: 0.75rem; margin-bottom: 1rem;">
-                <div style="font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Dampak:</div>
-                ${Object.entries(event.effects).map(([dimension, value]) => {
-                  const dimensionData = gameData.scores[dimension];
-                  const sign = value > 0 ? '+' : '';
-                  const color = value > 0 ? '#22c55e' : '#ef4444';
-                  return `
-                    <div style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
-                      <span>${dimensionData.icon} ${dimensionData.label}</span>
-                      <span style="font-weight: 700; color: ${color};">${sign}${value}</span>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            ` : ''}
-            
-            <button id="continueBtn" class="btn btn-primary" style="width: 100%;">
-              ✅ Lanjutkan
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', eventHTML);
-
-    // Apply effects
-    if (event.effects) {
-      Object.entries(event.effects).forEach(([dimension, value]) => {
-        if (this.gameState.scores[dimension] !== undefined) {
-          this.gameState.scores[dimension] += value;
-          this.gameState.scores[dimension] = Math.max(0, Math.min(100, this.gameState.scores[dimension]));
-        }
-      });
-      this.updateScoreDisplay();
-    }
-
-    document.getElementById('continueBtn').addEventListener('click', () => {
-      document.getElementById('randomEventOverlay').remove();
-      if (callback) callback();
-    });
-  }
-
-  showTempMessage(message) {
-    const existing = document.getElementById('tempMessage');
-    if (existing) existing.remove();
-
-    const messageDiv = document.createElement('div');
-    messageDiv.id = 'tempMessage';
-    messageDiv.textContent = message;
-    messageDiv.style.cssText = `
-      position: fixed;
-      top: 2rem;
-      right: 2rem;
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      color: var(--text-primary);
-      padding: 1rem 1.5rem;
-      border-radius: 0.75rem;
-      border: 1px solid var(--glass-border);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      z-index: 10000;
-      font-weight: 500;
-      animation: slideInRight 0.3s ease;
-      max-width: 300px;
-    `;
-
-    document.body.appendChild(messageDiv);
-
-    setTimeout(() => {
-      messageDiv.style.animation = 'slideOutRight 0.3s ease';
-      setTimeout(() => messageDiv.remove(), 300);
-    }, 3000);
-  }
-
-  applyCareerTheme(pathId) {
-    const themes = {
-      guru: {
-        primary: '#22c55e',
-        secondary: '#86efac'
-      },
-      wira: {
-        primary: '#f97316',
-        secondary: '#fdba74'
-      },
-      s2: {
-        primary: '#3b82f6',
-        secondary: '#93c5fd'
-      },
-      ind: {
-        primary: '#8b5cf6',
-        secondary: '#c4b5fd'
-      }
-    };
-
-    const theme = themes[pathId];
-    if (theme) {
-      document.documentElement.style.setProperty('--accent-primary', theme.primary);
-      document.documentElement.style.setProperty('--accent-secondary', theme.secondary);
-    }
-  }
-
-  // ============================================================================
-  // ONBOARDING SYSTEM
-  // ============================================================================
-
-  showOnboarding() {
-    const onboarding = document.getElementById('onboardingOverlay');
-    if (!onboarding) return;
-
-    onboarding.style.display = 'flex';
-    this.currentSlide = 0;
-    this.renderOnboardingSlide();
-  }
-
-  hideOnboarding() {
-    const onboarding = document.getElementById('onboardingOverlay');
-    if (onboarding) {
-      onboarding.style.display = 'none';
-      this.settings.onboardingDone = true;
-    }
-  }
-
-  renderOnboardingSlide() {
-    const slides = [
-      {
-        icon: '🎮',
-        title: 'Selamat Datang!',
-        text: 'Game ini akan membantumu mengeksplorasi berbagai jalur karir di bidang IT. Setiap pilihan yang kamu buat akan mempengaruhi hasil akhirmu.'
-      },
-      {
-        icon: '🎯',
-        title: 'Cara Bermain',
-        text: 'Kamu akan menghadapi berbagai situasi dan dilema. Pilih opsi yang paling sesuai dengan kepribadian dan aspirasi karirmu. Tidak ada jawaban benar atau salah!'
-      },
-      {
-        icon: '📊',
-        title: 'Sistem Penilaian',
-        text: 'Setiap pilihan mempengaruhi 5 dimensi: Minat, Keseimbangan, Penghasilan, Nilai Diri, dan Kepuasan. Skor akhir menentukan kesesuaian jalur karir untukmu.'
-      },
-      {
-        icon: '💾',
-        title: 'Progress Otomatis Tersimpan',
-        text: 'Jangan khawatir! Progress kamu akan otomatis tersimpan. Kamu bisa melanjutkan kapan saja tanpa kehilangan kemajuan.'
-      }
-    ];
-
-    const slide = slides[this.currentSlide];
-    const slideContainer = document.querySelector('.onboarding-slide');
-    
-    if (slideContainer) {
-      slideContainer.innerHTML = `
-        <div class="onboarding-icon">${slide.icon}</div>
-        <h2>${slide.title}</h2>
-        <p>${slide.text}</p>
-      `;
-    }
-
-    // Update indicators
-    const indicators = document.querySelectorAll('.indicator');
-    indicators.forEach((indicator, index) => {
-      indicator.classList.toggle('active', index === this.currentSlide);
-    });
-
-    // Update buttons
-    const prevBtn = document.getElementById('prevSlide');
-    const nextBtn = document.getElementById('nextSlide');
-    const startBtn = document.getElementById('startGame');
-
-    if (prevBtn) prevBtn.style.display = this.currentSlide === 0 ? 'none' : 'block';
-    if (nextBtn) nextBtn.style.display = this.currentSlide === slides.length - 1 ? 'none' : 'block';
-    if (startBtn) startBtn.style.display = this.currentSlide === slides.length - 1 ? 'block' : 'none';
-  }
-
-  nextSlide() {
-    if (this.isTransitioning) return;
-    
-    const maxSlides = 4;
-    if (this.currentSlide < maxSlides - 1) {
-      this.isTransitioning = true;
-      this.currentSlide++;
-      this.renderOnboardingSlide();
-      setTimeout(() => this.isTransitioning = false, 300);
-    }
-  }
-
-  prevSlide() {
-    if (this.isTransitioning) return;
-    
-    if (this.currentSlide > 0) {
-      this.isTransitioning = true;
-      this.currentSlide--;
-      this.renderOnboardingSlide();
-      setTimeout(() => this.isTransitioning = false, 300);
-    }
-  }
-
-  // ============================================================================
-  // EVENT LISTENERS SETUP
-  // ============================================================================
-
-  setupEventListeners() {
-    // Onboarding controls
-    document.getElementById('prevSlide')?.addEventListener('click', () => this.prevSlide());
-    document.getElementById('nextSlide')?.addEventListener('click', () => this.nextSlide());
-    document.getElementById('startGame')?.addEventListener('click', () => this.hideOnboarding());
-    document.getElementById('skipOnboarding')?.addEventListener('click', () => this.hideOnboarding());
-
-    // Settings controls
-    document.getElementById('toggleMusic')?.addEventListener('click', () => this.toggleMusic());
-    document.getElementById('toggleAnimations')?.addEventListener('click', () => this.toggleAnimations());
-    document.getElementById('toggleTheme')?.addEventListener('click', () => this.toggleTheme());
-    
-    // Save/Load controls
-    document.getElementById('saveGameBtn')?.addEventListener('click', () => this.saveGame());
-    document.getElementById('loadGameBtn')?.addEventListener('click', () => this.loadGame());
-    document.getElementById('exportSaveBtn')?.addEventListener('click', () => this.exportSave());
-    
-    // About dialog
-    document.getElementById('aboutBtn')?.addEventListener('click', () => this.showAboutDialog());
-    document.getElementById('helpBtn')?.addEventListener('click', () => this.showHelpDialog());
-
-    // Close dialogs on overlay click
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('dialog-overlay')) {
-        e.target.style.display = 'none';
-      }
-    });
-  }
-
-  setupKeyboardNavigation() {
-    document.addEventListener('keydown', (e) => {
-      // Onboarding navigation
-      if (document.getElementById('onboardingOverlay')?.style.display !== 'none') {
-        if (e.key === 'ArrowRight') this.nextSlide();
-        if (e.key === 'ArrowLeft') this.prevSlide();
-        if (e.key === 'Enter' && this.currentSlide === 3) this.hideOnboarding();
-      }
-
-      // Choice selection (1-4 keys)
-      if (e.key >= '1' && e.key <= '4') {
-        const choiceIndex = parseInt(e.key) - 1;
-        const choices = document.querySelectorAll('.choice-button');
-        if (choices[choiceIndex]) {
-          choices[choiceIndex].click();
-        }
-      }
-
-      // Save game (Ctrl/Cmd + S)
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        this.saveGame();
-      }
-    });
-  }
-
-  initializeTheme() {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'dark');
+    console.log('🔄 Game restarted');
   }
 
   toggleMusic() {
     this.settings.musicEnabled = !this.settings.musicEnabled;
-    const btn = document.getElementById('toggleMusic');
-    if (btn) {
-      btn.textContent = this.settings.musicEnabled ? '🔊' : '🔇';
-    }
-    this.showTempMessage(this.settings.musicEnabled ? '🔊 Musik aktif' : '🔇 Musik mati');
+    const musicBtn = document.getElementById('musicBtn');
+    musicBtn.style.opacity = this.settings.musicEnabled ? '1' : '0.5';
+    
+    // In a real implementation, this would control background music
+    console.log('🎵 Music toggled:', this.settings.musicEnabled ? 'ON' : 'OFF');
   }
 
-  toggleAnimations() {
-    this.settings.animationsEnabled = !this.settings.animationsEnabled;
-    const btn = document.getElementById('toggleAnimations');
-    if (btn) {
-      btn.innerHTML = this.settings.animationsEnabled ? '✨' : '🚫';
-    }
-    this.showTempMessage(this.settings.animationsEnabled ? '✨ Animasi aktif' : '🚫 Animasi mati');
+  saveGame() {
+    // Since localStorage is not available in sandbox, we'll just show a message
+    this.showTempMessage('💾 Game state saved! (In-memory only)');
+    console.log('💾 Game saved (in-memory):', this.gameState);
   }
 
-  toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
-    const newTheme = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    this.showTempMessage(newTheme === 'dark' ? '🌙 Mode gelap' : '☀️ Mode terang');
-  }
-
-  showAboutDialog() {
-    const dialog = document.getElementById('aboutDialog');
-    if (dialog) dialog.style.display = 'flex';
-  }
-
-  showHelpDialog() {
-    const helpHTML = `
-      <div id="helpDialog" class="dialog-overlay" style="display: flex;">
-        <div class="dialog-content">
-          <div class="dialog-header">
-            <h2>❓ Bantuan</h2>
-            <button class="close-btn" onclick="document.getElementById('helpDialog').remove()">✕</button>
-          </div>
-          <div class="dialog-body">
-            <h3>Cara Bermain:</h3>
-            <ul style="line-height: 1.8;">
-              <li>Pilih salah satu dari 4 jalur karir yang tersedia</li>
-              <li>Baca setiap situasi dengan seksama</li>
-              <li>Pilih opsi yang paling sesuai dengan nilai dan aspirasi kamu</li>
-              <li>Perhatikan perubahan skor di setiap dimensi</li>
-              <li>Selesaikan perjalanan untuk melihat hasil analisis</li>
-            </ul>
-            
-            <h3 style="margin-top: 1.5rem;">Shortcut Keyboard:</h3>
-            <ul style="line-height: 1.8;">
-              <li><kbd>1-4</kbd>: Pilih opsi 1-4</li>
-              <li><kbd>Ctrl/Cmd + S</kbd>: Simpan game</li>
-              <li><kbd>→ ←</kbd>: Navigasi onboarding</li>
-            </ul>
-
-            <h3 style="margin-top: 1.5rem;">Tips:</h3>
-            <ul style="line-height: 1.8;">
-              <li>Tidak ada jawaban benar atau salah</li>
-              <li>Progress otomatis tersimpan setiap scene</li>
-              <li>Kamu bisa export hasil untuk dokumentasi</li>
-              <li>Coba jalur berbeda untuk eksplorasi lengkap</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+  showTempMessage(message) {
+    // Create temporary message overlay
+    const messageEl = document.createElement('div');
+    messageEl.className = 'temp-message';
+    messageEl.textContent = message;
+    messageEl.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16) var(--space-24);
+      color: var(--color-text);
+      z-index: 2000;
+      animation: fadeInUp 0.3s ease-out;
     `;
-    document.body.insertAdjacentHTML('beforeend', helpHTML);
+    
+    document.body.appendChild(messageEl);
+    
+    setTimeout(() => {
+      messageEl.style.animation = 'fadeOut 0.3s ease-out forwards';
+      setTimeout(() => {
+        document.body.removeChild(messageEl);
+      }, 300);
+    }, 2000);
   }
 }
 
-// ============================================================================
-// INITIALIZE GAME ON PAGE LOAD
-// ============================================================================
-
-// Wait for DOM and gameData to be ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initGame);
-} else {
-  initGame();
-}
-
-function initGame() {
-  if (typeof gameData === 'undefined') {
-    console.error('gameData not loaded! Make sure game_data.js is included before app.js');
-    return;
-  }
+// Initialize the game when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Add fade out animation keyframes to document
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-10px);
+      }
+    }
+  `;
+  document.head.appendChild(style);
   
-  console.log('🚀 Starting Career Exploration Game...');
+  // Initialize the game
   window.game = new CareerExplorationGame();
-}
+});
 
-// ============================================================================
-// UTILITY: Add CSS animations if not present
-// ============================================================================
-
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideInRight {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideOutRight {
-    from {
-      transform: translateX(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .score-changes-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 9999;
-    transition: all 0.3s ease;
-  }
-
-  kbd {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 0.25rem;
-    padding: 0.125rem 0.375rem;
-    font-family: monospace;
-    font-size: 0.875rem;
-  }
-`;
-document.head.appendChild(style);
-
-// ============================================================================
-// END OF FILE - app.js v7.0 with Working Save/Load System
-// ============================================================================
+// Expose game for debugging
+window.gameData = gameData;
