@@ -312,6 +312,16 @@ class CareerExplorationGame {
     return labels[pathId] || 'Belum Memilih Jalur';
   }
 
+  getPathColor(pathId) {
+    const colors = {
+      'guru': '#22c55e',
+      'wira': '#f97316',
+      's2': '#3b82f6',
+      'ind': '#8b5cf6'
+    };
+    return colors[pathId] || '#6366f1';
+  }
+
   exportSave() {
     try {
       const saveData = localStorage.getItem('careerGameSave');
@@ -422,15 +432,29 @@ class CareerExplorationGame {
         const choiceBtn = document.createElement('button');
         choiceBtn.className = 'choice-card';
         
-        // Get icon from choice or use default
-        const icon = choice.icon || '→';
+        // Generate effect icons/emoji based on effects
+        let icon = '→';
+        if (choice.effects) {
+          const values = Object.values(choice.effects);
+          const avg = values.reduce((a, b) => a + b, 0) / values.length;
+          if (avg > 5) icon = '📈'; // Very positive
+          else if (avg > 0) icon = '👍'; // Slightly positive
+          else if (avg < -5) icon = '📉'; // Very negative
+          else if (avg < 0) icon = '⚠️'; // Slightly negative
+        }
         
         let effectsHtml = '';
         if (choice.effects) {
-          const effectsText = Object.entries(choice.effects)
-            .map(([dim, val]) => `${dim}: ${val > 0 ? '+' : ''}${val}`)
-            .join(', ');
-          effectsHtml = `<div class="choice-effects">${effectsText}</div>`;
+          const effectsList = Object.entries(choice.effects)
+            .filter(([_, val]) => val !== 0)
+            .map(([dim, val]) => {
+              const dimensionData = gameData.scores[dim];
+              const sign = val > 0 ? '+' : '';
+              const color = val > 0 ? '#22c55e' : '#ef4444';
+              return `<span style="color: ${color}; font-weight: 700;">${dimensionData.icon}${sign}${val}</span>`;
+            })
+            .join(' ');
+          effectsHtml = `<div class="choice-effects" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;">${effectsList}</div>`;
         }
         
         choiceBtn.innerHTML = `
@@ -438,7 +462,6 @@ class CareerExplorationGame {
           <div class="choice-content">
             <h3>${choice.text}</h3>
             ${choice.subtext ? `<p>${choice.subtext}</p>` : ''}
-            ${choice.description ? `<small>${choice.description}</small>` : ''}
           </div>
           ${effectsHtml}
         `;
@@ -546,8 +569,8 @@ class CareerExplorationGame {
       }
     }
 
-    // Check for fail condition (if any score below 30)
-    const failScore = Object.entries(this.gameState.scores).find(([_, value]) => value < 30);
+    // Check for fail condition (if any score below 35)
+    const failScore = Object.entries(this.gameState.scores).find(([_, value]) => value < 35);
     
     if (failScore && this.gameState.currentPath) {
       const failSceneId = `${this.gameState.currentPath}_fail`;
@@ -835,30 +858,21 @@ class CareerExplorationGame {
   // ============================================================================
 
   updateScoreDisplay() {
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    if (!scoreDisplay) return;
+    const scoreboard = document.getElementById('scoreboard');
+    if (!scoreboard) return;
 
-    scoreDisplay.innerHTML = Object.entries(this.gameState.scores)
-      .map(([dimension, value]) => {
-        const dimensionData = gameData.scores[dimension];
-        const color = this.getScoreColor(value);
-        
-        return `
-          <div class="score-item-mini">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-              <span style="font-size: 0.85rem; color: var(--text-secondary);">
-                ${dimensionData.icon} ${dimensionData.label}
-              </span>
-              <span style="font-weight: 700; color: ${color}; font-size: 0.9rem;">
-                ${value}
-              </span>
-            </div>
-            <div class="score-bar-mini">
-              <div class="score-bar-fill-mini" style="width: ${value}%; background: ${color};"></div>
-            </div>
-          </div>
-        `;
-      }).join('');
+    // Update individual score values
+    Object.entries(this.gameState.scores).forEach(([dimension, value]) => {
+      const scoreElement = document.getElementById(`score${dimension.charAt(0).toUpperCase()}${dimension.slice(1)}`);
+      if (scoreElement) {
+        scoreElement.textContent = Math.round(value);
+      }
+    });
+
+    // Show scoreboard after first choice
+    if (this.gameState.gameStarted && scoreboard.style.display === 'none') {
+      scoreboard.style.display = 'flex';
+    }
   }
 
   showScoreChanges(effects) {
@@ -939,7 +953,7 @@ class CareerExplorationGame {
               </div>
             ` : ''}
             
-            <button id="continueBtn" class="btn-primary" style="width: 100%;">
+            <button id="continueBtn" class="btn btn-primary" style="width: 100%;">
               ✅ Lanjutkan
             </button>
           </div>
