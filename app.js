@@ -1012,7 +1012,7 @@ class CareerExplorationGame {
   // ============================================================================
 
   showOnboarding() {
-    const onboarding = document.getElementById('onboarding');
+    const onboarding = document.getElementById('onboardingOverlay');
     if (!onboarding) return;
 
     onboarding.style.display = 'flex';
@@ -1021,7 +1021,7 @@ class CareerExplorationGame {
   }
 
   hideOnboarding() {
-    const onboarding = document.getElementById('onboarding');
+    const onboarding = document.getElementById('onboardingOverlay');
     if (onboarding) {
       onboarding.style.display = 'none';
       this.settings.onboardingDone = true;
@@ -1138,7 +1138,7 @@ class CareerExplorationGame {
   setupKeyboardNavigation() {
     document.addEventListener('keydown', (e) => {
       // Onboarding navigation
-      if (document.getElementById('onboarding')?.style.display !== 'none') {
+      if (document.getElementById('onboardingOverlay')?.style.display !== 'none') {
         if (e.key === 'ArrowRight') this.nextSlide();
         if (e.key === 'ArrowLeft') this.prevSlide();
         if (e.key === 'Enter' && this.currentSlide === 3) this.hideOnboarding();
