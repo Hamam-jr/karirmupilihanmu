@@ -416,13 +416,31 @@ class CareerExplorationGame {
     // Clear and render choices
     if (choicesContainer) {
       choicesContainer.innerHTML = '';
+      choicesContainer.setAttribute('data-count', scene.choices.length);
       
       scene.choices.forEach((choice, index) => {
         const choiceBtn = document.createElement('button');
-        choiceBtn.className = 'choice-button';
+        choiceBtn.className = 'choice-card';
+        
+        // Get icon from choice or use default
+        const icon = choice.icon || '→';
+        
+        let effectsHtml = '';
+        if (choice.effects) {
+          const effectsText = Object.entries(choice.effects)
+            .map(([dim, val]) => `${dim}: ${val > 0 ? '+' : ''}${val}`)
+            .join(', ');
+          effectsHtml = `<div class="choice-effects">${effectsText}</div>`;
+        }
+        
         choiceBtn.innerHTML = `
-          <div class="choice-main">${choice.text}</div>
-          ${choice.subtext ? `<div class="choice-subtext">${choice.subtext}</div>` : ''}
+          <div class="choice-icon">${icon}</div>
+          <div class="choice-content">
+            <h3>${choice.text}</h3>
+            ${choice.subtext ? `<p>${choice.subtext}</p>` : ''}
+            ${choice.description ? `<small>${choice.description}</small>` : ''}
+          </div>
+          ${effectsHtml}
         `;
         
         choiceBtn.addEventListener('click', () => this.selectChoice(index));
