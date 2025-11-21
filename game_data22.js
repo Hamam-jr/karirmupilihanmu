@@ -1430,10 +1430,30 @@ const gameData = {
     const avgScore = this.calculateAverageScore(scores);
     const path = this.careerPaths[pathId];
     const fitLevel = this.getFitLevel(avgScore);
+    
+    // Calculate strengths (scores >= 70)
+    const strengths = Object.entries(scores)
+      .filter(([_, score]) => score >= 70)
+      .map(([dim, score]) => ({
+        dimension: this.scores[dim].label,
+        score: Math.round(score)
+      }));
+    
+    // Calculate improvements (scores < 50)
+    const improvements = Object.entries(scores)
+      .filter(([_, score]) => score < 50)
+      .map(([dim, score]) => ({
+        dimension: this.scores[dim].label,
+        score: Math.round(score)
+      }));
+    
     return {
-      path: path ? path.label : pathId,
-      score: avgScore,
-      fitLevel: fitLevel,
+      careerPath: path ? path.label : pathId,
+      averageScore: avgScore,
+      fitLevel: fitLevel.label,
+      advice: `Berdasarkan perjalananmu, ${fitLevel.label.toLowerCase()} dengan jalur ${path ? path.label : pathId}. Skor kesesuaian: ${avgScore}%. ${fitLevel.message}`,
+      strengths: strengths,
+      improvements: improvements,
       message: `Kamu ${fitLevel.label} dengan jalur ${path ? path.label : pathId}. Skor kesesuaian: ${avgScore}%`
     };
   },
