@@ -1407,6 +1407,45 @@ const gameData = {
     const values = Object.values(scores);
     const sum = values.reduce((acc, val) => acc + val, 0);
     return Math.round(sum / values.length);
+  },
+
+  // Get random event for a specific career path
+  getRandomEvent: function(pathId) {
+    if (!this.randomEvents || this.randomEvents.length === 0) return null;
+    const filtered = this.randomEvents.filter(e => e.applicablePaths.includes(pathId));
+    if (filtered.length === 0) return null;
+    return filtered[Math.floor(Math.random() * filtered.length)];
+  },
+
+  // Get career fit level based on score
+  getFitLevel: function(score) {
+    if (score >= this.fitLevels.excellent.threshold) return this.fitLevels.excellent;
+    if (score >= this.fitLevels.good.threshold) return this.fitLevels.good;
+    if (score >= this.fitLevels.moderate.threshold) return this.fitLevels.moderate;
+    return this.fitLevels.low;
+  },
+
+  // Generate career recommendation
+  generateRecommendation: function(scores, pathId) {
+    const avgScore = this.calculateAverageScore(scores);
+    const path = this.careerPaths[pathId];
+    const fitLevel = this.getFitLevel(avgScore);
+    return {
+      path: path ? path.label : pathId,
+      score: avgScore,
+      fitLevel: fitLevel,
+      message: `Kamu ${fitLevel.label} dengan jalur ${path ? path.label : pathId}. Skor kesesuaian: ${avgScore}%`
+    };
+  },
+
+  // Get label for career path
+  getPathLabel: function(pathId) {
+    return this.careerPaths[pathId]?.label || pathId;
+  },
+
+  // Get icon for career path
+  getPathIcon: function(pathId) {
+    return this.careerPaths[pathId]?.icon || '🎯';
   }
 };
 
