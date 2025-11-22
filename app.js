@@ -457,8 +457,8 @@ class CareerExplorationGame {
         this.gameState.currentScene = choice.nextScene;
         this.renderScene();
       }
-      // Auto-save after making a choice
-      this.saveGame();
+      // Silent auto-save after making a choice (no notification popup)
+      this.autoSaveGame();
       this.isTransitioning = false;
     }, 600);
   }
@@ -826,12 +826,31 @@ class CareerExplorationGame {
       };
       
       localStorage.setItem('careerGameSave', JSON.stringify(saveData));
+      // Manual save - show notification
       this.showTempMessage('✅ Progress tersimpan!');
       console.log('💾 Game saved to localStorage:', saveData);
       return true;
     } catch (error) {
       console.error('❌ Save failed:', error);
       this.showTempMessage('❌ Gagal menyimpan progress');
+      return false;
+    }
+  }
+
+  autoSaveGame() {
+    // Silent auto-save without notification
+    try {
+      const saveData = {
+        timestamp: new Date().toISOString(),
+        gameState: this.gameState,
+        settings: this.settings
+      };
+      
+      localStorage.setItem('careerGameSave', JSON.stringify(saveData));
+      console.log('💾 Auto-saved at scene:', this.gameState.currentScene);
+      return true;
+    } catch (error) {
+      console.error('❌ Auto-save failed:', error);
       return false;
     }
   }
