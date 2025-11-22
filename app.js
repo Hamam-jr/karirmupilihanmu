@@ -34,21 +34,30 @@ class CareerExplorationGame {
   init() {
     console.log('🎮 Initializing Career Exploration Game v6.0');
     
-    // Check if onboarding was completed before
-    // Since we can't use localStorage, show onboarding every time
     this.setupEventListeners();
     this.setupKeyboardNavigation();
     this.initializeTheme();
     
-    // Show onboarding for first-time users
-    if (!this.settings.onboardingDone) {
-      this.showOnboarding();
-    } else {
+    // Check for saved game first
+    const savedGame = this.loadGameFromStorage();
+    
+    if (savedGame) {
+      console.log('✅ Saved game found, loading...');
+      this.gameState = savedGame.gameState;
+      this.settings = savedGame.settings;
       this.hideOnboarding();
+      // Render the saved scene
+      setTimeout(() => this.renderScene(), 100);
+    } else {
+      // Show onboarding for first-time users
+      if (!this.settings.onboardingDone) {
+        this.showOnboarding();
+      } else {
+        this.hideOnboarding();
+      }
+      // Initialize first scene
+      this.renderScene();
     }
-
-    // Initialize first scene
-    this.renderScene();
   }
 
   setupEventListeners() {
@@ -448,6 +457,8 @@ class CareerExplorationGame {
         this.gameState.currentScene = choice.nextScene;
         this.renderScene();
       }
+      // Auto-save after making a choice
+      this.saveGame();
       this.isTransitioning = false;
     }, 600);
   }
@@ -807,9 +818,36 @@ class CareerExplorationGame {
   }
 
   saveGame() {
-    // Since localStorage is not available in sandbox, we'll just show a message
-    this.showTempMessage('💾 Game state saved! (In-memory only)');
-    console.log('💾 Game saved (in-memory):', this.gameState);
+    try {
+      const saveData = {
+        timestamp: new Date().toISOString(),
+        gameState: this.gameState,
+        settings: this.settings
+      };
+      
+      localStorage.setItem('careerGameSave', JSON.stringify(saveData));
+      this.showTempMessage('✅ Progress tersimpan!');
+      console.log('💾 Game saved to localStorage:', saveData);
+      return true;
+    } catch (error) {
+      console.error('❌ Save failed:', error);
+      this.showTempMessage('❌ Gagal menyimpan progress');
+      return false;
+    }
+  }
+
+  loadGameFromStorage() {
+    try {
+      const savedData = localStorage.getItem('careerGameSave');
+      if (!savedData) return null;
+      
+      const data = JSON.parse(savedData);
+      console.log('✅ Game loaded from localStorage:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Load failed:', error);
+      return null;
+    }
   }
 
   showTempMessage(message) {
