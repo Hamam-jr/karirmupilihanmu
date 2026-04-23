@@ -29,7 +29,7 @@ const gameData = {
       colorPrimary: "#22c55e",
       colorAccent: "#86efac",
       description: "Jalur pendidik dengan status ASN (Pegawai Negeri Sipil)",
-      characterName: "Pak Budi - Guru Senior"
+      characterName: "Guru Senior"
     },
     wira: {
       id: "wira",
@@ -38,7 +38,7 @@ const gameData = {
       colorPrimary: "#f97316",
       colorAccent: "#fdba74",
       description: "Membangun startup teknologi sendiri",
-      characterName: "Sarah - Pengusaha Teknologi"
+      characterName: "Pengusaha Teknologi"
     },
     s2: {
       id: "s2",
@@ -47,7 +47,7 @@ const gameData = {
       colorPrimary: "#3b82f6",
       colorAccent: "#93c5fd",
       description: "Melanjutkan studi magister dan menjadi peneliti",
-      characterName: "Dr. Andi - Peneliti"
+      characterName: "Peneliti"
     },
     ind: {
       id: "ind",
@@ -56,7 +56,7 @@ const gameData = {
       colorPrimary: "#8b5cf6",
       colorAccent: "#c4b5fd",
       description: "Bekerja di perusahaan teknologi",
-      characterName: "Ibu Nina - Senior Developer"
+      characterName: "Senior Developer"
     }
   },
 
