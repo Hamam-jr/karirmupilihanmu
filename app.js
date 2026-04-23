@@ -37,6 +37,7 @@ class CareerExplorationGame {
     this.setupEventListeners();
     this.setupKeyboardNavigation();
     this.initializeTheme();
+    this.initializeAudio(); // Initialize audio
     
     // Check for saved game first
     const savedGame = this.loadGameFromStorage();
@@ -811,10 +812,43 @@ class CareerExplorationGame {
   toggleMusic() {
     this.settings.musicEnabled = !this.settings.musicEnabled;
     const musicBtn = document.getElementById('musicBtn');
+    const gameAudio = document.getElementById('gameAudio');
+    
     musicBtn.style.opacity = this.settings.musicEnabled ? '1' : '0.5';
     
-    // In a real implementation, this would control background music
+    if (gameAudio) {
+      if (this.settings.musicEnabled) {
+        gameAudio.volume = 0.3; // Set volume to 30%
+        gameAudio.play().catch(error => {
+          console.log('⚠️ Autoplay tidak diizinkan:', error);
+        });
+      } else {
+        gameAudio.pause();
+      }
+    }
+    
     console.log('🎵 Music toggled:', this.settings.musicEnabled ? 'ON' : 'OFF');
+  }
+
+  initializeAudio() {
+    const gameAudio = document.getElementById('gameAudio');
+    if (!gameAudio) return;
+    
+    // Set initial volume
+    gameAudio.volume = 0.3;
+    
+    // Try to play if music is enabled
+    if (this.settings.musicEnabled) {
+      gameAudio.play().catch(error => {
+        // Browser autoplay policy usually blocks this
+        console.log('💡 Klik tombol musik (🎵) untuk memutar musik latar');
+      });
+    }
+    
+    // Handle any playback errors
+    gameAudio.addEventListener('error', () => {
+      console.warn('⚠️ Musik tidak bisa dimuat. Periksa file:', gameAudio.src);
+    });
   }
 
   saveGame() {
